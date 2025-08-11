@@ -31,29 +31,34 @@
             console.error('Error Firebase:', error);
         }
 
+        // Datos basados exactamente en tu Excel
         const initialData = {
             itinerario: [
-                { id: 1, fecha: "2024-12-20", dia: "Sábado", ciudad: "Zurich", pais: "🇨🇭", llegada: "Vuelo MX", salida: "", noches: 1, hotel: "Hotel Zurich Centro", costoHotel: 15000, transporte: "Vuelo", costoTransporte: 50000, actividades: "Casco histórico, Lago Zurich", notas: "Desayuno incluido" },
-                { id: 2, fecha: "2024-12-21", dia: "Domingo", ciudad: "Zurich/Lucerna", pais: "🇨🇭", llegada: "", salida: "", noches: 1, hotel: "Hotel Zurich Centro", costoHotel: 15000, transporte: "", costoTransporte: 0, actividades: "Excursión Lucerna", notas: "Día completo" },
-                { id: 3, fecha: "2024-12-22", dia: "Lunes", ciudad: "Zurich → St Moritz", pais: "🇨🇭", llegada: "", salida: "Tren", noches: 0, hotel: "", costoHotel: 0, transporte: "Tren Zurich-St Moritz", costoTransporte: 8100, actividades: "Viaje panorámico", notas: "Tren redondo" },
-                { id: 4, fecha: "2024-12-23", dia: "Martes", ciudad: "St Moritz", pais: "🇨🇭", llegada: "Desde Zurich", salida: "", noches: 2, hotel: "Hotel St Moritz", costoHotel: 25000, transporte: "", costoTransporte: 0, actividades: "Esquí, lago", notas: "Navidad en Alpes" },
-                { id: 5, fecha: "2024-12-24", dia: "Miércoles", ciudad: "St Moritz", pais: "🇨🇭", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "Nochebuena", notas: "" },
-                { id: 6, fecha: "2024-12-25", dia: "Jueves", ciudad: "St Moritz → Milan", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 0, hotel: "", costoHotel: 0, transporte: "Tren Directo Tirano-Milan", costoTransporte: 6000, actividades: "Viaje escénico", notas: "Navidad" },
-                { id: 7, fecha: "2024-12-26", dia: "Viernes", ciudad: "Milan", pais: "🇮🇹", llegada: "Desde St Moritz", salida: "", noches: 1, hotel: "Hotel Milan", costoHotel: 12000, transporte: "", costoTransporte: 0, actividades: "Duomo, La Scala", notas: "Boxing Day" },
-                { id: 8, fecha: "2024-12-27", dia: "Sábado", ciudad: "Milan → Turin", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Turin", costoHotel: 8000, transporte: "Tren Milan-Turin", costoTransporte: 2000, actividades: "Centro histórico", notas: "" },
-                { id: 9, fecha: "2024-12-28", dia: "Domingo", ciudad: "Turin → Florencia", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 4, hotel: "Hotel Florencia", costoHotel: 15000, transporte: "Tren Turin-Florencia", costoTransporte: 1700, actividades: "Uffizi, Ponte Vecchio", notas: "4 noches" },
-                { id: 10, fecha: "2024-12-29", dia: "Lunes", ciudad: "Florencia", pais: "🇮🇹", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "David, Duomo", notas: "" },
-                { id: 11, fecha: "2024-12-30", dia: "Martes", ciudad: "Florencia → Pisa", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Pisa", costoHotel: 7500, transporte: "Tren Florencia-Pisa", costoTransporte: 900, actividades: "Torre inclinada", notas: "" },
-                { id: 12, fecha: "2024-12-31", dia: "Miércoles", ciudad: "Pisa → Roma", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 3, hotel: "Hotel Roma", costoHotel: 26000, transporte: "Tren Pisa-Roma", costoTransporte: 2500, actividades: "Coliseo, Vaticano", notas: "Año Nuevo" },
-                { id: 13, fecha: "2025-01-01", dia: "Jueves", ciudad: "Roma", pais: "🇮🇹", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "Año Nuevo", notas: "" },
-                { id: 14, fecha: "2025-01-02", dia: "Viernes", ciudad: "Roma → Venecia", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 2, hotel: "Hotel Venecia", costoHotel: 23000, transporte: "Tren Roma-Venecia", costoTransporte: 3000, actividades: "San Marcos, Dux", notas: "" },
-                { id: 15, fecha: "2025-01-03", dia: "Sábado", ciudad: "Venecia", pais: "🇮🇹", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "Gondola, Rialto", notas: "" },
-                { id: 16, fecha: "2025-01-04", dia: "Domingo", ciudad: "Venecia → Verona", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Verona", costoHotel: 7000, transporte: "Tren Venecia-Verona", costoTransporte: 1000, actividades: "Romeo y Julieta", notas: "" },
-                { id: 17, fecha: "2025-01-05", dia: "Lunes", ciudad: "Verona → Zurich", pais: "🇨🇭", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Aeropuerto", costoHotel: 2700, transporte: "Tren Verona-Zurich", costoTransporte: 6000, actividades: "Último día", notas: "" },
-                { id: 18, fecha: "2025-01-06", dia: "Martes", ciudad: "Zurich → México", pais: "🇲🇽", llegada: "", salida: "18:30 vuelo", noches: 0, hotel: "", costoHotel: 0, transporte: "Vuelo regreso", costoTransporte: 36300, actividades: "Vuelo de regreso", notas: "6:30pm salida" }
+                { id: 1, fecha: "2024-12-20", diaSemana: "Sábado", ciudadOrigen: "", ciudadDestino: "Zurich", paisDestino: "Suiza", rutaTransporte: "", noches: "", costoTransporte: "", costoAlojamiento: "", actividades: "Desayuno", notas: "" },
+                { id: 2, fecha: "2024-12-21", diaSemana: "Domingo", ciudadOrigen: "", ciudadDestino: "Zurich/Lucerna", paisDestino: "Suiza", rutaTransporte: "", noches: "", costoTransporte: "", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 3, fecha: "2024-12-22", diaSemana: "Lunes", ciudadOrigen: "", ciudadDestino: "Zurich", paisDestino: "Suiza", rutaTransporte: "", noches: "3", costoTransporte: "8100", costoAlojamiento: "", actividades: "", notas: "Tren redondo" },
+                { id: 4, fecha: "2024-12-23", diaSemana: "Martes", ciudadOrigen: "", ciudadDestino: "St Moritz", paisDestino: "Suiza", rutaTransporte: "", noches: "2", costoTransporte: "25000", costoAlojamiento: "", actividades: "", notas: "Tren Directo (Zurich - ST Moritz)" },
+                { id: 5, fecha: "2024-12-24", diaSemana: "Miércoles", ciudadOrigen: "", ciudadDestino: "St Moritz", paisDestino: "Suiza", rutaTransporte: "", noches: "", costoTransporte: "", costoAlojamiento: "", actividades: "", notas: "Tren directo (St Moritz - Tirano)" },
+                { id: 6, fecha: "2024-12-25", diaSemana: "Jueves", ciudadOrigen: "St Moritz/Tirano", ciudadDestino: "Milan", paisDestino: "Italia", rutaTransporte: "Tren Directo (Tirano - Milan)", noches: "", costoTransporte: "1200", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 7, fecha: "2024-12-26", diaSemana: "Viernes", ciudadOrigen: "", ciudadDestino: "Milan", paisDestino: "Italia", rutaTransporte: "", noches: "", costoTransporte: "", costoAlojamiento: "", actividades: "", notas: "Tren Redondo (Milan-Turin)" },
+                { id: 8, fecha: "2024-12-27", diaSemana: "Sábado", ciudadOrigen: "", ciudadDestino: "Milan/Turin", paisDestino: "Italia", rutaTransporte: "", noches: "4", costoTransporte: "15000", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 9, fecha: "2024-12-28", diaSemana: "Domingo", ciudadOrigen: "", ciudadDestino: "milan/juego", paisDestino: "Italia", rutaTransporte: "", noches: "1", costoTransporte: "7500", costoAlojamiento: "", actividades: "", notas: "Tren Directo (Milan-Florencia)" },
+                { id: 10, fecha: "2024-12-29", diaSemana: "Lunes", ciudadOrigen: "", ciudadDestino: "milan/Florencia", paisDestino: "Italia", rutaTransporte: "Tren Directo (Florencia-Pisa)", noches: "", costoTransporte: "900", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 11, fecha: "2024-12-30", diaSemana: "Martes", ciudadOrigen: "", ciudadDestino: "florencia/pisa/Roma", paisDestino: "Italia", rutaTransporte: "", noches: "3", costoTransporte: "26000", costoAlojamiento: "", actividades: "", notas: "Tren Directo (Pisa-Roma)" },
+                { id: 12, fecha: "2024-12-31", diaSemana: "Miércoles", ciudadOrigen: "", ciudadDestino: "Roma", paisDestino: "Italia", rutaTransporte: "", noches: "", costoTransporte: "", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 13, fecha: "2025-01-01", diaSemana: "Jueves", ciudadOrigen: "", ciudadDestino: "Roma", paisDestino: "Italia", rutaTransporte: "", noches: "3", costoTransporte: "26000", costoAlojamiento: "", actividades: "", notas: "Tren Directo (Roma-Venecia)" },
+                { id: 14, fecha: "2025-01-02", diaSemana: "Viernes", ciudadOrigen: "", ciudadDestino: "Roma/Venecia", paisDestino: "Italia", rutaTransporte: "", noches: "2", costoTransporte: "23000", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 15, fecha: "2025-01-03", diaSemana: "Sábado", ciudadOrigen: "", ciudadDestino: "Venecia", paisDestino: "Italia", rutaTransporte: "", noches: "1", costoTransporte: "7000", costoAlojamiento: "", actividades: "", notas: "Tren Directo (Venecia-Verona)" },
+                { id: 16, fecha: "2025-01-04", diaSemana: "Domingo", ciudadOrigen: "", ciudadDestino: "Venecia/Verona", paisDestino: "Italia", rutaTransporte: "", noches: "1", costoTransporte: "2700", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 17, fecha: "2025-01-05", diaSemana: "Lunes", ciudadOrigen: "", ciudadDestino: "Verona/Zurich", paisDestino: "Suiza", rutaTransporte: "Tren (Verona - Zurich)", noches: "", costoTransporte: "6000", costoAlojamiento: "", actividades: "", notas: "" },
+                { id: 18, fecha: "2025-01-06", diaSemana: "Martes", ciudadOrigen: "", ciudadDestino: "Verona/Zurich", paisDestino: "México", rutaTransporte: "6:30pm, salida a mty", noches: "", costoTransporte: "114300", costoAlojamiento: "36300", actividades: "", notas: "" }
             ],
+            actividades: {},
             gastos: [],
-            actividades: {}
+            presupuesto: {
+                ingresos: [],
+                totalPlanificado: 0
+            }
         };
 
         let viajeData = {};
@@ -97,9 +102,9 @@
                 <div class="header">
                     <h1>🌍 Viaje Europa 2025</h1>
                     <div class="stats">
-                        <span class="stat">📅 18 días</span>
-                        <span class="stat">🏙️ 8 ciudades</span>
-                        <span class="stat">💰 $${calcularTotal().toLocaleString()}</span>
+                        <span class="stat">📅 ${viajeData.itinerario.length} días</span>
+                        <span class="stat">🏙️ ${getCiudadesUnicas().length} ciudades</span>
+                        <span class="stat">💰 $${calcularTotalGastos().toLocaleString()}</span>
                         <span class="stat ${isFirebaseConnected ? 'connected' : 'offline'}">
                             ${isFirebaseConnected ? '🟢 Online' : '🔴 Offline'}
                         </span>
@@ -108,12 +113,17 @@
 
                 <div class="tabs">
                     <button class="tab-btn active" onclick="showTab('itinerario')">📋 Itinerario</button>
+                    <button class="tab-btn" onclick="showTab('actividades')">🎯 Actividades</button>
                     <button class="tab-btn" onclick="showTab('presupuesto')">💰 Presupuesto</button>
                     <button class="tab-btn" onclick="showTab('gastos')">🧾 Gastos</button>
                 </div>
 
                 <div id="itinerario" class="tab-content active">
                     ${renderItinerario()}
+                </div>
+                
+                <div id="actividades" class="tab-content">
+                    ${renderActividades()}
                 </div>
                 
                 <div id="presupuesto" class="tab-content">
@@ -134,12 +144,12 @@
                             <tr>
                                 <th>Fecha</th>
                                 <th>Día</th>
-                                <th>Ciudad</th>
+                                <th>Origen → Destino</th>
+                                <th>País</th>
+                                <th>Ruta/Transporte</th>
                                 <th>Noches</th>
-                                <th>Transporte</th>
-                                <th>Costo</th>
-                                <th>Hotel</th>
-                                <th>Costo</th>
+                                <th>Costo Transporte</th>
+                                <th>Costo Alojamiento</th>
                                 <th>Actividades</th>
                                 <th>Notas</th>
                                 <th></th>
@@ -149,14 +159,18 @@
                             ${viajeData.itinerario.map(dia => `
                                 <tr class="day-row">
                                     <td class="fecha">${formatDateShort(dia.fecha)}</td>
-                                    <td>${dia.dia}</td>
-                                    <td class="ciudad">${dia.pais} ${dia.ciudad}</td>
+                                    <td>${dia.diaSemana || ''}</td>
+                                    <td class="ruta">
+                                        ${dia.ciudadOrigen ? `${dia.ciudadOrigen} → ` : ''}${dia.ciudadDestino}
+                                    </td>
+                                    <td>${dia.paisDestino}</td>
+                                    <td class="transporte">${dia.rutaTransporte || '-'}</td>
                                     <td class="center">${dia.noches || '-'}</td>
-                                    <td class="transporte">${dia.transporte || '-'}</td>
-                                    <td class="costo">${dia.costoTransporte > 0 ? '$' + dia.costoTransporte.toLocaleString() : '-'}</td>
-                                    <td class="hotel">${dia.hotel || '-'}</td>
-                                    <td class="costo">${dia.costoHotel > 0 ? '$' + dia.costoHotel.toLocaleString() : '-'}</td>
-                                    <td class="actividades">${dia.actividades}</td>
+                                    <td class="costo">${dia.costoTransporte ? '$' + parseInt(dia.costoTransporte).toLocaleString() : '-'}</td>
+                                    <td class="costo">${dia.costoAlojamiento ? '$' + parseInt(dia.costoAlojamiento).toLocaleString() : '-'}</td>
+                                    <td class="actividades-cell">
+                                        ${getActividadesDia(dia.id) || dia.actividades || '-'}
+                                    </td>
                                     <td class="notas">${dia.notas || '-'}</td>
                                     <td class="actions">
                                         <button onclick="editRow(${dia.id})" class="btn-edit">✏️</button>
@@ -168,75 +182,123 @@
                 </div>
                 
                 <div class="actions-bar">
-                    <button onclick="addExpense()" class="btn-primary">➕ Agregar Gasto</button>
-                    <button onclick="exportItinerary()" class="btn-secondary">📤 Exportar</button>
+                    <button onclick="addDay()" class="btn-primary">➕ Agregar Día</button>
+                    <button onclick="exportData()" class="btn-secondary">📤 Exportar</button>
+                </div>
+            `;
+        }
+
+        function renderActividades() {
+            const ciudades = getCiudadesUnicas();
+            
+            return `
+                <div class="actividades-container">
+                    <div class="actividades-header">
+                        <h3>🎯 Actividades por Ciudad</h3>
+                        <button onclick="addCiudadActividades()" class="btn-primary">➕ Nueva Ciudad</button>
+                    </div>
+                    
+                    <div class="ciudades-grid">
+                        ${ciudades.map(ciudad => `
+                            <div class="ciudad-card">
+                                <div class="ciudad-header">
+                                    <h4>${ciudad}</h4>
+                                    <button onclick="addActividad('${ciudad}')" class="btn-small">➕</button>
+                                </div>
+                                <div class="actividades-list">
+                                    ${(viajeData.actividades[ciudad] || []).map((actividad, index) => `
+                                        <div class="actividad-item">
+                                            <span class="actividad-text">${actividad}</span>
+                                            <div class="actividad-actions">
+                                                <button onclick="editActividad('${ciudad}', ${index})" class="btn-tiny">✏️</button>
+                                                <button onclick="deleteActividad('${ciudad}', ${index})" class="btn-tiny">🗑️</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                    ${(viajeData.actividades[ciudad] || []).length === 0 ? '<p class="empty-activities">No hay actividades</p>' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
         }
 
         function renderPresupuesto() {
-            const totales = calcularTotales();
+            const totalTransporte = calcularTotalTransporte();
+            const totalAlojamiento = calcularTotalAlojamiento();
+            const totalIngresos = calcularTotalIngresos();
+            const totalGastos = calcularTotalGastos();
+            const balance = totalIngresos - totalGastos;
             
             return `
-                <div class="budget-grid">
-                    <div class="budget-card total">
-                        <h3>💰 Total del Viaje</h3>
-                        <div class="amount">$${totales.total.toLocaleString()}</div>
+                <div class="presupuesto-container">
+                    <div class="presupuesto-header">
+                        <h3>💰 Presupuesto del Viaje</h3>
+                        <button onclick="addIngreso()" class="btn-primary">➕ Agregar Ingreso</button>
                     </div>
                     
-                    <div class="budget-card">
-                        <h4>🚂 Transporte</h4>
-                        <div class="amount">$${totales.transporte.toLocaleString()}</div>
-                        <div class="percentage">${((totales.transporte/totales.total)*100).toFixed(1)}%</div>
+                    <div class="budget-summary">
+                        <div class="budget-card total ${balance >= 0 ? 'positive' : 'negative'}">
+                            <h3>Balance Actual</h3>
+                            <div class="amount">$${balance.toLocaleString()}</div>
+                            <p>${balance >= 0 ? 'Presupuesto disponible' : 'Sobrepasado'}</p>
+                        </div>
+                        
+                        <div class="budget-card">
+                            <h4>💰 Total Ingresos</h4>
+                            <div class="amount green">$${totalIngresos.toLocaleString()}</div>
+                        </div>
+                        
+                        <div class="budget-card">
+                            <h4>💸 Total Gastos</h4>
+                            <div class="amount red">$${totalGastos.toLocaleString()}</div>
+                        </div>
                     </div>
-                    
-                    <div class="budget-card">
-                        <h4>🏨 Alojamiento</h4>
-                        <div class="amount">$${totales.alojamiento.toLocaleString()}</div>
-                        <div class="percentage">${((totales.alojamiento/totales.total)*100).toFixed(1)}%</div>
-                    </div>
-                    
-                    <div class="budget-card">
-                        <h4>🍽️ Comida (Est.)</h4>
-                        <div class="amount">$${totales.comidaEstimada.toLocaleString()}</div>
-                        <div class="percentage">${((totales.comidaEstimada/totales.total)*100).toFixed(1)}%</div>
-                    </div>
-                </div>
 
-                <div class="budget-breakdown">
-                    <h3>Desglose por Ciudad</h3>
-                    <table class="budget-table">
-                        <thead>
-                            <tr>
-                                <th>Ciudad</th>
-                                <th>Noches</th>
-                                <th>Transporte</th>
-                                <th>Hotel</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${getCiudadesResumen().map(ciudad => `
-                                <tr>
-                                    <td>${ciudad.nombre}</td>
-                                    <td class="center">${ciudad.noches}</td>
-                                    <td class="costo">$${ciudad.transporte.toLocaleString()}</td>
-                                    <td class="costo">$${ciudad.hotel.toLocaleString()}</td>
-                                    <td class="costo total-cell">$${(ciudad.transporte + ciudad.hotel).toLocaleString()}</td>
-                                </tr>
+                    <div class="ingresos-section">
+                        <h4>💰 Ingresos</h4>
+                        <div class="ingresos-list">
+                            ${(viajeData.presupuesto.ingresos || []).map(ingreso => `
+                                <div class="ingreso-item">
+                                    <span>${ingreso.descripcion}</span>
+                                    <span class="amount-small green">$${ingreso.monto.toLocaleString()}</span>
+                                    <button onclick="deleteIngreso('${ingreso.id}')" class="btn-tiny">🗑️</button>
+                                </div>
                             `).join('')}
-                        </tbody>
-                    </table>
+                            ${(viajeData.presupuesto.ingresos || []).length === 0 ? '<p class="empty-state">No hay ingresos registrados</p>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="gastos-planificados">
+                        <h4>📊 Gastos Planificados</h4>
+                        <div class="gastos-breakdown">
+                            <div class="gasto-categoria">
+                                <span>🚂 Transporte</span>
+                                <span class="amount-small">$${totalTransporte.toLocaleString()}</span>
+                            </div>
+                            <div class="gasto-categoria">
+                                <span>🏨 Alojamiento</span>
+                                <span class="amount-small">$${totalAlojamiento.toLocaleString()}</span>
+                            </div>
+                            <div class="gasto-categoria">
+                                <span>🧾 Gastos Registrados</span>
+                                <span class="amount-small">$${calcularTotalGastosReales().toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         }
 
         function renderGastos() {
+            const ciudades = getCiudadesUnicas();
+            
             return `
                 <div class="gastos-container">
                     <div class="gastos-header">
                         <h3>🧾 Gastos del Viaje</h3>
-                        <button onclick="addExpense()" class="btn-primary">➕ Nuevo Gasto</button>
+                        <button onclick="addGasto()" class="btn-primary">➕ Nuevo Gasto</button>
                     </div>
                     
                     <div class="gastos-grid">
@@ -244,13 +306,13 @@
                             <div class="gasto-card">
                                 <div class="gasto-header">
                                     <span class="categoria">${gasto.categoria}</span>
-                                    <span class="monto">$${gasto.monto.toLocaleString()}</span>
+                                    <span class="monto red">$${gasto.monto.toLocaleString()}</span>
                                 </div>
                                 <div class="gasto-detalle">
                                     <p><strong>${gasto.descripcion}</strong></p>
                                     <p>${gasto.ciudad} - ${formatDateShort(gasto.fecha)}</p>
                                 </div>
-                                <button onclick="deleteExpense('${gasto.id}')" class="btn-delete">🗑️</button>
+                                <button onclick="deleteGasto('${gasto.id}')" class="btn-delete">🗑️</button>
                             </div>
                         `).join('')}
                         
@@ -260,37 +322,54 @@
             `;
         }
 
-        function calcularTotal() {
-            return viajeData.itinerario.reduce((sum, dia) => sum + dia.costoTransporte + dia.costoHotel, 0);
-        }
-
-        function calcularTotales() {
-            const transporte = viajeData.itinerario.reduce((sum, dia) => sum + dia.costoTransporte, 0);
-            const alojamiento = viajeData.itinerario.reduce((sum, dia) => sum + dia.costoHotel, 0);
-            const comidaEstimada = 18 * 2500; // 18 días * $2500 por día
-            
-            return {
-                transporte,
-                alojamiento,
-                comidaEstimada,
-                total: transporte + alojamiento + comidaEstimada
-            };
-        }
-
-        function getCiudadesResumen() {
-            const ciudades = {};
-            
+        // Funciones auxiliares
+        function getCiudadesUnicas() {
+            const ciudades = new Set();
             viajeData.itinerario.forEach(dia => {
-                const ciudad = dia.ciudad.split(' ')[0]; // Tomar solo primera palabra
-                if (!ciudades[ciudad]) {
-                    ciudades[ciudad] = { nombre: ciudad, noches: 0, transporte: 0, hotel: 0 };
+                if (dia.ciudadDestino) {
+                    // Limpiar nombres de ciudades
+                    const ciudad = dia.ciudadDestino.split('/')[0].split(' ')[0];
+                    if (ciudad && ciudad !== 'milan' && ciudad !== 'florencia') {
+                        ciudades.add(ciudad.charAt(0).toUpperCase() + ciudad.slice(1));
+                    }
                 }
-                ciudades[ciudad].noches += dia.noches || 0;
-                ciudades[ciudad].transporte += dia.costoTransporte || 0;
-                ciudades[ciudad].hotel += dia.costoHotel || 0;
             });
+            return Array.from(ciudades);
+        }
+
+        function getActividadesDia(diaId) {
+            const dia = viajeData.itinerario.find(d => d.id === diaId);
+            if (!dia || !dia.ciudadDestino) return '';
             
-            return Object.values(ciudades).filter(c => c.noches > 0 || c.transporte > 0 || c.hotel > 0);
+            const ciudad = dia.ciudadDestino.split('/')[0].split(' ')[0];
+            const ciudadNormalizada = ciudad.charAt(0).toUpperCase() + ciudad.slice(1);
+            const actividades = viajeData.actividades[ciudadNormalizada] || [];
+            
+            return actividades.slice(0, 2).join(', ') + (actividades.length > 2 ? '...' : '');
+        }
+
+        function calcularTotalTransporte() {
+            return viajeData.itinerario.reduce((sum, dia) => {
+                return sum + (dia.costoTransporte ? parseInt(dia.costoTransporte) : 0);
+            }, 0);
+        }
+
+        function calcularTotalAlojamiento() {
+            return viajeData.itinerario.reduce((sum, dia) => {
+                return sum + (dia.costoAlojamiento ? parseInt(dia.costoAlojamiento) : 0);
+            }, 0);
+        }
+
+        function calcularTotalIngresos() {
+            return (viajeData.presupuesto.ingresos || []).reduce((sum, ingreso) => sum + ingreso.monto, 0);
+        }
+
+        function calcularTotalGastos() {
+            return calcularTotalTransporte() + calcularTotalAlojamiento();
+        }
+
+        function calcularTotalGastosReales() {
+            return (viajeData.gastos || []).reduce((sum, gasto) => sum + gasto.monto, 0);
         }
 
         function formatDateShort(dateString) {
@@ -311,21 +390,167 @@
             const dia = viajeData.itinerario.find(d => d.id === id);
             if (!dia) return;
             
-            const newActividades = prompt('Actividades:', dia.actividades);
-            if (newActividades !== null) {
-                dia.actividades = newActividades;
+            openEditModal(dia);
+        };
+
+        function openEditModal(dia) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content large">
+                    <h3>✏️ Editar Día - ${formatDateShort(dia.fecha)}</h3>
+                    <form id="editForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha:</label>
+                                <input type="date" id="fecha" value="${dia.fecha}">
+                            </div>
+                            <div class="form-group">
+                                <label>Día de la semana:</label>
+                                <input type="text" id="diaSemana" value="${dia.diaSemana || ''}">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Ciudad origen:</label>
+                                <input type="text" id="ciudadOrigen" value="${dia.ciudadOrigen || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad destino:</label>
+                                <input type="text" id="ciudadDestino" value="${dia.ciudadDestino || ''}">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>País:</label>
+                                <input type="text" id="paisDestino" value="${dia.paisDestino || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Noches:</label>
+                                <input type="number" id="noches" value="${dia.noches || ''}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Ruta/Transporte:</label>
+                            <input type="text" id="rutaTransporte" value="${dia.rutaTransporte || ''}">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Costo Transporte:</label>
+                                <input type="number" id="costoTransporte" value="${dia.costoTransporte || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Costo Alojamiento:</label>
+                                <input type="number" id="costoAlojamiento" value="${dia.costoAlojamiento || ''}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Actividades:</label>
+                            <input type="text" id="actividades" value="${dia.actividades || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Notas:</label>
+                            <textarea id="notas" rows="3">${dia.notas || ''}</textarea>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('editForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                dia.fecha = document.getElementById('fecha').value;
+                dia.diaSemana = document.getElementById('diaSemana').value;
+                dia.ciudadOrigen = document.getElementById('ciudadOrigen').value;
+                dia.ciudadDestino = document.getElementById('ciudadDestino').value;
+                dia.paisDestino = document.getElementById('paisDestino').value;
+                dia.noches = document.getElementById('noches').value;
+                dia.rutaTransporte = document.getElementById('rutaTransporte').value;
+                dia.costoTransporte = document.getElementById('costoTransporte').value;
+                dia.costoAlojamiento = document.getElementById('costoAlojamiento').value;
+                dia.actividades = document.getElementById('actividades').value;
+                dia.notas = document.getElementById('notas').value;
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        window.addActividad = function(ciudad) {
+            const actividad = prompt(`Nueva actividad para ${ciudad}:`);
+            if (actividad) {
+                if (!viajeData.actividades[ciudad]) {
+                    viajeData.actividades[ciudad] = [];
+                }
+                viajeData.actividades[ciudad].push(actividad);
                 saveData('viajeData', viajeData);
                 renderApp();
             }
         };
 
-        window.addExpense = function() {
+        window.editActividad = function(ciudad, index) {
+            const actividad = viajeData.actividades[ciudad][index];
+            const nuevaActividad = prompt('Editar actividad:', actividad);
+            if (nuevaActividad !== null) {
+                viajeData.actividades[ciudad][index] = nuevaActividad;
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        window.deleteActividad = function(ciudad, index) {
+            if (confirm('¿Eliminar esta actividad?')) {
+                viajeData.actividades[ciudad].splice(index, 1);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        window.addIngreso = function() {
+            const descripcion = prompt('Descripción del ingreso:');
+            if (!descripcion) return;
+            
+            const monto = prompt('Monto:');
+            if (!monto || isNaN(monto)) return;
+            
+            const ingreso = {
+                id: Date.now().toString(),
+                descripcion: descripcion,
+                monto: parseInt(monto)
+            };
+            
+            if (!viajeData.presupuesto.ingresos) {
+                viajeData.presupuesto.ingresos = [];
+            }
+            
+            viajeData.presupuesto.ingresos.push(ingreso);
+            saveData('viajeData', viajeData);
+            renderApp();
+        };
+
+        window.deleteIngreso = function(id) {
+            if (confirm('¿Eliminar este ingreso?')) {
+                viajeData.presupuesto.ingresos = viajeData.presupuesto.ingresos.filter(i => i.id !== id);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        window.addGasto = function() {
+            const ciudades = getCiudadesUnicas();
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
                 <div class="modal-content">
                     <h3>➕ Nuevo Gasto</h3>
-                    <form id="expenseForm">
+                    <form id="gastoForm">
                         <div class="form-group">
                             <label>Descripción:</label>
                             <input type="text" id="descripcion" required>
@@ -346,10 +571,8 @@
                         </div>
                         <div class="form-group">
                             <label>Ciudad:</label>
-                            <select id="ciudad">
-                                ${[...new Set(viajeData.itinerario.map(d => d.ciudad.split(' ')[0]))].map(c => 
-                                    `<option value="${c}">${c}</option>`
-                                ).join('')}
+                            <select id="ciudadGasto">
+                                ${ciudades.map(c => `<option value="${c}">${c}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group">
@@ -366,7 +589,7 @@
             
             document.body.appendChild(modal);
             
-            document.getElementById('expenseForm').onsubmit = function(e) {
+            document.getElementById('gastoForm').onsubmit = function(e) {
                 e.preventDefault();
                 
                 const gasto = {
@@ -374,7 +597,7 @@
                     descripcion: document.getElementById('descripcion').value,
                     monto: parseInt(document.getElementById('monto').value),
                     categoria: document.getElementById('categoria').value,
-                    ciudad: document.getElementById('ciudad').value,
+                    ciudad: document.getElementById('ciudadGasto').value,
                     fecha: document.getElementById('fechaGasto').value
                 };
                 
@@ -387,12 +610,7 @@
             };
         };
 
-        window.closeModal = function() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        };
-
-        window.deleteExpense = function(id) {
+        window.deleteGasto = function(id) {
             if (confirm('¿Eliminar este gasto?')) {
                 viajeData.gastos = viajeData.gastos.filter(g => g.id !== id);
                 saveData('viajeData', viajeData);
@@ -400,7 +618,37 @@
             }
         };
 
-        window.exportItinerary = function() {
+        window.addDay = function() {
+            const lastDay = viajeData.itinerario[viajeData.itinerario.length - 1];
+            const newDate = new Date(lastDay.fecha);
+            newDate.setDate(newDate.getDate() + 1);
+            
+            const newDay = {
+                id: Date.now(),
+                fecha: newDate.toISOString().split('T')[0],
+                diaSemana: '',
+                ciudadOrigen: '',
+                ciudadDestino: '',
+                paisDestino: '',
+                rutaTransporte: '',
+                noches: '',
+                costoTransporte: '',
+                costoAlojamiento: '',
+                actividades: '',
+                notas: ''
+            };
+            
+            viajeData.itinerario.push(newDay);
+            saveData('viajeData', viajeData);
+            renderApp();
+        };
+
+        window.closeModal = function() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        };
+
+        window.exportData = function() {
             const data = JSON.stringify(viajeData, null, 2);
             const blob = new Blob([data], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -504,13 +752,13 @@
         .table-container {
             background: white;
             overflow-x: auto;
-            border-radius: 0;
         }
         
         .itinerario-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            min-width: 1200px;
         }
         
         .itinerario-table th {
@@ -522,6 +770,8 @@
             border-bottom: 1px solid #e5e7eb;
             font-size: 12px;
             white-space: nowrap;
+            position: sticky;
+            top: 0;
         }
         
         .itinerario-table td {
@@ -537,16 +787,17 @@
         .fecha {
             font-weight: 600;
             color: #3b82f6;
-            min-width: 50px;
+            min-width: 60px;
         }
         
-        .ciudad {
+        .ruta {
             font-weight: 500;
-            min-width: 120px;
+            min-width: 150px;
         }
         
         .center {
             text-align: center;
+            min-width: 60px;
         }
         
         .costo {
@@ -556,15 +807,12 @@
             min-width: 80px;
         }
         
-        .transporte, .hotel {
+        .transporte {
             max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
         
-        .actividades {
-            max-width: 200px;
+        .actividades-cell {
+            max-width: 180px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -624,12 +872,139 @@
             font-weight: 500;
         }
         
-        .budget-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 20px;
+        .btn-small {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-tiny {
+            background: none;
+            border: 1px solid #d1d5db;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        
+        .btn-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+        
+        /* Actividades */
+        .actividades-container {
             padding: 30px;
             background: white;
+        }
+        
+        .actividades-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .actividades-header h3 {
+            font-size: 18px;
+            color: #0f172a;
+        }
+        
+        .ciudades-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .ciudad-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .ciudad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .ciudad-header h4 {
+            color: #0f172a;
+            font-size: 16px;
+        }
+        
+        .actividades-list {
+            min-height: 100px;
+        }
+        
+        .actividad-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .actividad-item:last-child {
+            border-bottom: none;
+        }
+        
+        .actividad-text {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .actividad-actions {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .empty-activities {
+            color: #6b7280;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Presupuesto */
+        .presupuesto-container {
+            padding: 30px;
+            background: white;
+        }
+        
+        .presupuesto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .presupuesto-header h3 {
+            font-size: 18px;
+            color: #0f172a;
+        }
+        
+        .budget-summary {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
         }
         
         .budget-card {
@@ -644,6 +1019,14 @@
             border: none;
         }
         
+        .budget-card.positive {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .budget-card.negative {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
         .budget-card h3, .budget-card h4 {
             font-size: 14px;
             margin-bottom: 8px;
@@ -656,48 +1039,51 @@
             margin-bottom: 4px;
         }
         
-        .budget-card:not(.total) .amount {
+        .amount.green {
             color: #059669;
         }
         
-        .percentage {
-            font-size: 12px;
-            opacity: 0.7;
+        .amount.red {
+            color: #dc2626;
         }
         
-        .budget-breakdown {
-            padding: 0 30px 30px;
-            background: white;
+        .amount-small {
+            font-weight: 600;
         }
         
-        .budget-breakdown h3 {
-            margin-bottom: 20px;
-            font-size: 18px;
+        .amount-small.green {
+            color: #059669;
+        }
+        
+        .amount-small.red {
+            color: #dc2626;
+        }
+        
+        .ingresos-section, .gastos-planificados {
+            margin-bottom: 30px;
+        }
+        
+        .ingresos-section h4, .gastos-planificados h4 {
+            margin-bottom: 16px;
             color: #0f172a;
         }
         
-        .budget-table {
-            width: 100%;
-            border-collapse: collapse;
+        .ingresos-list, .gastos-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
         
-        .budget-table th, .budget-table td {
+        .ingreso-item, .gasto-categoria {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        
-        .budget-table th {
             background: #f8fafc;
-            font-weight: 600;
-            color: #374151;
+            border-radius: 6px;
         }
         
-        .total-cell {
-            font-weight: 600;
-            background: #f0fdf4;
-        }
-        
+        /* Gastos */
         .gastos-container {
             padding: 30px;
             background: white;
@@ -745,6 +1131,9 @@
         
         .monto {
             font-weight: 600;
+        }
+        
+        .monto.red {
             color: #dc2626;
         }
         
@@ -758,21 +1147,6 @@
             font-size: 12px;
         }
         
-        .btn-delete {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-        }
-        
-        .btn-delete:hover {
-            background: #fee2e2;
-        }
-        
         .empty-state {
             grid-column: 1 / -1;
             text-align: center;
@@ -781,6 +1155,7 @@
             font-style: italic;
         }
         
+        /* Modal */
         .modal {
             position: fixed;
             top: 0;
@@ -799,7 +1174,13 @@
             padding: 24px;
             border-radius: 8px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content.large {
+            max-width: 700px;
         }
         
         .modal-content h3 {
@@ -811,6 +1192,12 @@
             margin-bottom: 16px;
         }
         
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
         .form-group label {
             display: block;
             margin-bottom: 4px;
@@ -818,12 +1205,16 @@
             color: #374151;
         }
         
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 8px 12px;
             border: 1px solid #d1d5db;
             border-radius: 4px;
             font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
         }
         
         .form-buttons {
@@ -847,25 +1238,25 @@
                 font-size: 13px;
             }
             
-            .itinerario-table {
-                font-size: 12px;
-            }
-            
-            .itinerario-table th, .itinerario-table td {
-                padding: 8px 4px;
-            }
-            
-            .budget-grid {
+            .budget-summary {
                 grid-template-columns: 1fr;
-                padding: 20px;
             }
             
-            .actions-bar, .gastos-container, .budget-breakdown {
-                padding: 20px;
-            }
-            
-            .gastos-grid {
+            .ciudades-grid, .gastos-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 20px;
+                width: calc(100% - 40px);
+            }
+            
+            .actions-bar, .actividades-container, .presupuesto-container, .gastos-container {
+                padding: 20px;
             }
         }
     </style>
