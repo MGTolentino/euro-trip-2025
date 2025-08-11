@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Organizador de Viaje</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>🗺️ Organizador de Viaje Europa 2025-2026</h1>
+            <div class="info-viaje">
+                <span class="fecha-viaje">📅 19 Dic 2025 - 7 Ene 2026</span>
+                <span class="duracion">20 días en Europa</span>
+                <span class="total-costo">💰 $485,000 MXN</span>
+                <span class="status online">🟢 Conectado</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('itinerario')">📋 Itinerario</button>
+            <button class="tab-btn" onclick="showTab('calendario')">📅 Calendario</button>
+            <button class="tab-btn" onclick="showTab('transportes')">✈️ Transportes</button>
+            <button class="tab-btn" onclick="showTab('hoteles')">🏨 Hoteles</button>
+            <button class="tab-btn" onclick="showTab('actividades')">🎯 Actividades</button>
+            <button class="tab-btn" onclick="showTab('presupuesto')">💰 Presupuesto</button>
+        </div>
+
+        <div id="itinerario" class="tab-content active">
+            <div class="itinerario-container">
+                <div class="itinerario-header">
+                    <h3>📋 Planificación del Viaje</h3>
+                    <div class="view-toggle">
+                        <button class="btn active" onclick="toggleView('list')">📋 Lista</button>
+                        <button class="btn" onclick="toggleView('cards')">📊 Cards</button>
+                    </div>
+                    <button onclick="addEstancia()" class="btn-primary">➕ Nueva Estancia</button>
+                </div>
+                
+                <div class="filtros-container">
+                    <div class="filtros-header">
+                        <h4>🔍 Filtros y Búsqueda</h4>
+                    </div>
+                    <div class="filtros-controles">
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" placeholder="Buscar por destino...">
+                        </div>
+                        <select class="filter-select sort-select">
+                            <option value="fecha">📅 Por fecha</option>
+                            <option value="destino">🏙️ Por destino</option>
+                            <option value="costo">💰 Por costo</option>
+                            <option value="duracion">⏱️ Por duración</option>
+                        </select>
+                        <select class="filter-select">
+                            <option value="all">Todas</option>
+                            <option value="hoteles">Con hoteles</option>
+                            <option value="transportes">Con transportes</option>
+                            <option value="actividades">Con actividades</option>
+                        </select>
+                        <button class="btn-clear-filters" onclick="clearFilters()">🗑️ Limpiar</button>
+                    </div>
+                </div>
+                
+                <div class="estancias-lista-compacta">
+                    <div class="estancias-table-header">
+                        <div>Destino</div>
+                        <div>Duración</div>
+                        <div>Hoteles</div>
+                        <div>Transportes</div>
+                        <div>Costo</div>
+                        <div>Acciones</div>
+                    </div>
+                    
+                    <!-- Estancia 1: Zurich -->
+                    <div class="estancia-row" data-index="0">
+                        <div class="estancia-destino">
+                            <h4>Zurich, Suiza</h4>
+                            <div class="estancia-fechas">19 dic - 22 dic</div>
+                        </div>
+                        <div class="estancia-duracion">
+                            <span class="duracion-badge">4 días</span>
+                        </div>
+                        <div class="estancia-elementos">
+                            <div class="elemento-count">🏨 1</div>
+                        </div>
+                        <div class="estancia-elementos">
+                            <div class="elemento-count">✈️ 1</div>
+                        </div>
+                        <div class="estancia-costo">
+                            <div class="costo-principal">$126,900</div>
+                            <div class="costo-secundario">MXN</div>
+                        </div>
+                        <div class="estancia-acciones">
+                            <button onclick="toggleExpandRow(0)" class="btn-tiny">🔽</button>
+                            <button onclick="editEstancia(0)" class="btn-tiny">✏️</button>
+                            <button onclick="deleteEstancia(0)" class="btn-tiny btn-danger">🗑️</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Estancia 2: Milán -->
+                    <div class="estancia-row" data-index="1">
+                        <div class="estancia-destino">
+                            <h4>Milán, Italia</h4>
+                            <div class="estancia-fechas">23 dic - 26 dic</div>
+                        </div>
+                        <div class="estancia-duracion">
+                            <span class="duracion-badge">4 días</span>
+                        </div>
+                        <div class="estancia-elementos">
+                            <div class="elemento-count">🏨 1</div>
+                        </div>
+                        <div class="estancia-elementos">
+                            <div class="elemento-count">✈️ 1</div>
+                        </div>
+                        <div class="estancia-costo">
+                            <div class="costo-principal">$88,795</div>
+                            <div class="costo-secundario">MXN</div>
+                        </div>
+                        <div class="estancia-acciones">
+                            <button onclick="toggleExpandRow(1)" class="btn-tiny">🔽</button>
+                            <button onclick="editEstancia(1)" class="btn-tiny">✏️</button>
+                            <button onclick="deleteEstancia(1)" class="btn-tiny btn-danger">🗑️</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Estancia 3: Roma -->
+                    <div class="estancia-row" data-index="2">
+                        <div class="estancia-destino">
+                            <h4>Roma, Italia</h4>
+                            <div class="estancia-fechas">27 dic - 2 ene</div>
+                        </div>
+                        <div class="estancia-duracion">
+                            <span class="duracion-badge">7 días</span>
+                        </div>
+                        <div class="estancia-elementos">
+                            <div class="elemento-count">🏨 1</div>
+                        </div>
+                        <div class="estancia-elementos">
+                            <div class="elemento-count">✈️ 2</div>
+                        </div>
+                        <div class="estancia-costo">
+                            <div class="costo-principal">$131,270</div>
+                            <div class="costo-secundario">MXN</div>
+                        </div>
+                        <div class="estancia-acciones">
+                            <button onclick="toggleExpandRow(2)" class="btn-tiny">🔽</button>
+                            <button onclick="editEstancia(2)" class="btn-tiny">✏️</button>
+                            <button onclick="deleteEstancia(2)" class="btn-tiny btn-danger">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="calendario" class="tab-content">
+            <div class="section-container">
+                <h3>📅 Calendario - En desarrollo</h3>
+                <p>Esta sección estará disponible pronto.</p>
+            </div>
+        </div>
+        
+        <div id="transportes" class="tab-content">
+            <div class="section-container">
+                <h3>✈️ Transportes - En desarrollo</h3>
+                <p>Esta sección estará disponible pronto.</p>
+            </div>
+        </div>
+        
+        <div id="hoteles" class="tab-content">
+            <div class="section-container">
+                <h3>🏨 Hoteles - En desarrollo</h3>
+                <p>Esta sección estará disponible pronto.</p>
+            </div>
+        </div>
+        
+        <div id="actividades" class="tab-content">
+            <div class="section-container">
+                <h3>🎯 Actividades - En desarrollo</h3>
+                <p>Esta sección estará disponible pronto.</p>
+            </div>
+        </div>
+        
+        <div id="presupuesto" class="tab-content">
+            <div class="section-container">
+                <h3>💰 Presupuesto - En desarrollo</h3>
+                <p>Esta sección estará disponible pronto.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Remover clase active de todos los tabs y contenido
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Activar el tab seleccionado
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function toggleView(view) {
+            document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            console.log('Vista cambiada a:', view);
+        }
+
+        function toggleExpandRow(index) {
+            console.log('Expandir fila:', index);
+            // Aquí iría la lógica de expansión
+        }
+
+        function editEstancia(index) {
+            alert('Editar estancia ' + index);
+        }
+
+        function deleteEstancia(index) {
+            if (confirm('¿Eliminar esta estancia?')) {
+                alert('Estancia ' + index + ' eliminada');
+            }
+        }
+
+        function addEstancia() {
+            alert('Agregar nueva estancia');
+        }
+
+        function clearFilters() {
+            document.querySelector('.search-input').value = '';
+            document.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página cargada correctamente');
+        });
+    </script>
+</body>
+</html>
