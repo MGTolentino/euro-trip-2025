@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Viaje - Europa 2025</title>
+    <title>Planeador de Viaje - Europa 2025</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
     
     <script type="module">
@@ -96,12 +96,12 @@
         function renderApp() {
             const app = document.getElementById('app');
             const totalDias = calcularDiasViaje();
-            const totalCiudades = viajeData.viaje.ciudades.length;
+            const totalCiudades = (viajeData.viaje && viajeData.viaje.ciudades) ? viajeData.viaje.ciudades.length : 0;
             const totalCosto = calcularCostoTotal();
             
             app.innerHTML = `
                 <div class="header">
-                    <h1>🌍 ${viajeData.viaje.nombre}</h1>
+                    <h1>🌍 Planeador de Viaje Europa 2025</h1>
                     <div class="stats">
                         <span class="stat">📅 ${totalDias} días</span>
                         <span class="stat">🏙️ ${totalCiudades} ciudades</span>
@@ -156,7 +156,7 @@
                     </div>
                     
                     <div class="timeline">
-                        ${viajeData.viaje.ciudades.map((ciudad, index) => {
+                        ${(viajeData.viaje && viajeData.viaje.ciudades || []).map((ciudad, index) => {
                             const dias = calcularDiasEnCiudad(ciudad.fechaLlegada, ciudad.fechaSalida);
                             const transporteStatus = getTransporteStatus(ciudad);
                             const hotelStatus = getHotelStatus(ciudad);
@@ -297,7 +297,7 @@
                     </div>
                     
                     <div class="ciudades-actividades">
-                        ${viajeData.viaje.ciudades.map(ciudad => `
+                        ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(ciudad => `
                             <div class="ciudad-actividades">
                                 <div class="ciudad-actividades-header">
                                     <h4>${ciudad.nombre}, ${ciudad.pais}</h4>
@@ -407,6 +407,9 @@
 
         // Funciones auxiliares
         function calcularDiasViaje() {
+            if (!viajeData.viaje || !viajeData.viaje.fechaInicio || !viajeData.viaje.fechaFin) {
+                return 0;
+            }
             const inicio = new Date(viajeData.viaje.fechaInicio);
             const fin = new Date(viajeData.viaje.fechaFin);
             return Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
@@ -588,7 +591,7 @@
                                 <label>Origen:</label>
                                 <select id="transporteOrigen" required>
                                     <option value="">Seleccionar...</option>
-                                    ${viajeData.viaje.ciudades.map(c => 
+                                    ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(c => 
                                         `<option value="${c.nombre}" ${transporte?.origen === c.nombre ? 'selected' : ''}>${c.nombre}</option>`
                                     ).join('')}
                                 </select>
@@ -597,7 +600,7 @@
                                 <label>Destino:</label>
                                 <select id="transporteDestino" required>
                                     <option value="">Seleccionar...</option>
-                                    ${viajeData.viaje.ciudades.map(c => 
+                                    ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(c => 
                                         `<option value="${c.nombre}" ${transporte?.destino === c.nombre ? 'selected' : ''}>${c.nombre}</option>`
                                     ).join('')}
                                 </select>
@@ -679,7 +682,7 @@
                                 <label>Ciudad:</label>
                                 <select id="hotelCiudad" required onchange="updateFechasDisponibles()">
                                     <option value="">Seleccionar...</option>
-                                    ${viajeData.viaje.ciudades.map(c => 
+                                    ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(c => 
                                         `<option value="${c.nombre}" ${hotel?.ciudad === c.nombre ? 'selected' : ''}>${c.nombre}</option>`
                                     ).join('')}
                                 </select>
@@ -1827,7 +1830,7 @@
 <body>
     <div id="app">
         <div class="header">
-            <h2>Cargando gestor de viaje...</h2>
+            <h2>Cargando planeador de viaje...</h2>
         </div>
     </div>
 </body>
