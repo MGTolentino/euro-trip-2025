@@ -849,86 +849,657 @@
         function openEstanciaModal(estanciaIndex = null, fechaInicio = null, fechaFin = null) {
             const estancia = estanciaIndex !== null ? viajeData.estancias[estanciaIndex] : null;
             
+            // Estado del calendario en el modal
+            let modalSelectedStart = fechaInicio || estancia?.fechaInicio || null;
+            let modalSelectedEnd = fechaFin || estancia?.fechaFin || null;
+            
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
-                <div class="modal-content calendario-integrado">
+                <div class="modal-content estancia-modal">
                     <h3>${estancia ? '✏️ Editar' : '➕ Nueva'} Estancia</h3>
                     
-                    <div class="calendario-modal">
-                        <h4>📅 Selecciona las fechas</h4>
-                        <div class="mini-calendario">
-                            ${renderMiniCalendario(fechaInicio, fechaFin)}
-                        </div>
-                        <div class="fechas-selected">
-                            <span id="modal-fecha-inicio">${fechaInicio ? formatDateLong(fechaInicio) : 'Fecha inicio'}</span>
-                            <span>→</span>
-                            <span id="modal-fecha-fin">${fechaFin ? formatDateLong(fechaFin) : 'Fecha fin'}</span>
-                        </div>
-                    </div>
-                    
-                    <form id="estanciaForm">
-                        <div class="form-group">
-                            <label>🏙️ Destino/Ciudad:</label>
-                            <input type="text" id="destino" value="${estancia?.destino || ''}" placeholder="Ej: Zurich, Milan, Roma..." required>
+                    <div class="estancia-form-container">
+                        <!-- Calendario integrado -->
+                        <div class="calendario-integrado">
+                            <h4>📅 Selecciona las fechas de la estancia</h4>
+                            <div class="mini-calendario-completo">
+                                ${renderCalendarioModal()}
+                            </div>
+                            <div class="fechas-seleccionadas-modal">
+                                <div class="fecha-display">
+                                    <span class="fecha-label">Inicio:</span>
+                                    <span id="modal-inicio" class="fecha-value">${modalSelectedStart ? formatDateLong(modalSelectedStart) : 'Selecciona fecha'}</span>
+                                </div>
+                                <div class="fecha-display">
+                                    <span class="fecha-label">Fin:</span>
+                                    <span id="modal-fin" class="fecha-value">${modalSelectedEnd ? formatDateLong(modalSelectedEnd) : 'Selecciona fecha'}</span>
+                                </div>
+                                <div class="duracion-display">
+                                    <strong id="duracion-calculada">${modalSelectedStart && modalSelectedEnd ? calcularDias(modalSelectedStart, modalSelectedEnd) + ' días' : ''}</strong>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label>📝 Notas (opcional):</label>
-                            <textarea id="notas" rows="2" placeholder="Información adicional sobre esta estancia...">${estancia?.notas || ''}</textarea>
+                        <!-- Información básica -->
+                        <div class="info-basica">
+                            <h4>🏙️ Información de la estancia</h4>
+                            <div class="form-group">
+                                <label>Destino/Ciudad:</label>
+                                <input type="text" id="destino" value="${estancia?.destino || ''}" placeholder="Ej: Zurich, Milan, Roma..." required>
+                            </div>
+                            <div class="form-group">
+                                <label>Notas (opcional):</label>
+                                <textarea id="notas" rows="2" placeholder="Información adicional sobre esta estancia...">${estancia?.notas || ''}</textarea>
+                            </div>
                         </div>
                         
+                        <!-- Hoteles -->
+                        <div class="seccion-elementos">
+                            <div class="seccion-header">
+                                <h4>🏨 Hoteles</h4>
+                                <button type="button" onclick="agregarHotelEnModal()" class="btn-agregar">➕ Agregar Hotel</button>
+                            </div>
+                            <div id="hoteles-lista" class="elementos-lista">
+                                ${renderHotelesEnModal(estancia?.hoteles || [])}
+                            </div>
+                        </div>
+                        
+                        <!-- Transportes -->
+                        <div class="seccion-elementos">
+                            <div class="seccion-header">
+                                <h4>✈️ Transportes</h4>
+                                <button type="button" onclick="agregarTransporteEnModal()" class="btn-agregar">➕ Agregar Transporte</button>
+                            </div>
+                            <div id="transportes-lista" class="elementos-lista">
+                                ${renderTransportesEnModal(estancia?.transportes || [])}
+                            </div>
+                        </div>
+                        
+                        <!-- Actividades -->
+                        <div class="seccion-elementos">
+                            <div class="seccion-header">
+                                <h4>🎯 Actividades</h4>
+                                <button type="button" onclick="agregarActividadEnModal()" class="btn-agregar">➕ Agregar Actividad</button>
+                            </div>
+                            <div id="actividades-lista" class="elementos-lista">
+                                ${renderActividadesEnModal(estancia?.actividades || [])}
+                            </div>
+                        </div>
+                        
+                        <!-- Botones principales -->
                         <div class="form-buttons">
-                            <button type="submit" class="btn-primary">💾 Crear Estancia</button>
+                            <button type="button" onclick="guardarEstancia()" class="btn-primary">💾 Guardar Estancia</button>
                             <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             `;
             
             document.body.appendChild(modal);
             
-            document.getElementById('estanciaForm').onsubmit = function(e) {
+            // Variables para el modal actual
+            window.modalSelectedStart = modalSelectedStart;
+            window.modalSelectedEnd = modalSelectedEnd;
+            window.modalEstancia = estancia;
+            window.modalEstanciaIndex = estanciaIndex;
+            window.modalHoteles = [...(estancia?.hoteles || [])];
+            window.modalTransportes = [...(estancia?.transportes || [])];
+            window.modalActividades = [...(estancia?.actividades || [])];
+            
+            // Actualizar calendario después de renderizar
+            setTimeout(updateModalCalendar, 100);
+        }
+
+        function renderCalendarioModal() {
+            return `
+                <div class="meses-modal-grid">
+                    ${renderMesModal("2025-12", "Diciembre 2025")}
+                    ${renderMesModal("2026-01", "Enero 2026")}
+                </div>
+            `;
+        }
+
+        function renderMesModal(mesAno, titulo) {
+            const [ano, mes] = mesAno.split('-').map(Number);
+            const primerDia = new Date(ano, mes - 1, 1);
+            const ultimoDia = new Date(ano, mes, 0);
+            const diasEnMes = ultimoDia.getDate();
+            const diaSemanaInicio = primerDia.getDay();
+            
+            let calendario = `
+                <div class="mes-modal">
+                    <h5 class="mes-modal-titulo">${titulo}</h5>
+                    <div class="dias-semana-modal">
+                        <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+                    </div>
+                    <div class="dias-modal-grid">
+            `;
+            
+            for (let i = 0; i < diaSemanaInicio; i++) {
+                calendario += '<div class="dia-modal-vacio"></div>';
+            }
+            
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const fecha = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                const esViaje = esFechaDeViaje(fecha);
+                const tieneEstancia = tieneEstanciaEnFecha(fecha);
+                
+                calendario += `
+                    <div class="dia-modal ${esViaje ? 'dia-modal-viaje' : ''} ${tieneEstancia ? 'dia-modal-ocupado' : ''}" 
+                         data-fecha="${fecha}" onclick="selectFechaModal('${fecha}')">
+                        ${dia}
+                    </div>
+                `;
+            }
+            
+            calendario += `
+                    </div>
+                </div>
+            `;
+            
+            return calendario;
+        }
+
+        function renderHotelesEnModal(hoteles) {
+            if (hoteles.length === 0) {
+                return '<p class="no-elementos-modal">No hay hoteles agregados</p>';
+            }
+            
+            return hoteles.map((hotel, index) => `
+                <div class="elemento-modal hotel-modal">
+                    <div class="elemento-modal-info">
+                        <strong>${hotel.nombre}</strong>
+                        <span>${hotel.tipoHabitacion} - ${hotel.cantidadHabitaciones} hab.</span>
+                        <span>${formatDateShort(hotel.fechaInicio)} - ${formatDateShort(hotel.fechaFin)}</span>
+                        <span class="precio-modal">${hotel.moneda} ${hotel.costo.toLocaleString()}</span>
+                        <span class="desayuno-modal ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
+                            ${hotel.desayunoIncluido ? '🍳 Con desayuno' : '❌ Sin desayuno'}
+                        </span>
+                    </div>
+                    <div class="elemento-modal-acciones">
+                        <button onclick="editarHotelEnModal(${index})" class="btn-modal-edit">✏️</button>
+                        <button onclick="eliminarHotelEnModal(${index})" class="btn-modal-delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTransportesEnModal(transportes) {
+            if (transportes.length === 0) {
+                return '<p class="no-elementos-modal">No hay transportes agregados</p>';
+            }
+            
+            return transportes.map((transporte, index) => `
+                <div class="elemento-modal transporte-modal">
+                    <div class="elemento-modal-info">
+                        <strong>${getTransporteIcon(transporte.tipo)} ${transporte.origen} → ${transporte.destino}</strong>
+                        <span>${formatDateShort(transporte.fecha)} ${transporte.hora ? '- ' + transporte.hora : ''}</span>
+                        <span class="precio-modal">${transporte.moneda} ${transporte.costo.toLocaleString()}</span>
+                        <span>${transporte.tipo}</span>
+                    </div>
+                    <div class="elemento-modal-acciones">
+                        <button onclick="editarTransporteEnModal(${index})" class="btn-modal-edit">✏️</button>
+                        <button onclick="eliminarTransporteEnModal(${index})" class="btn-modal-delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderActividadesEnModal(actividades) {
+            if (actividades.length === 0) {
+                return '<p class="no-elementos-modal">No hay actividades agregadas</p>';
+            }
+            
+            return actividades.map((actividad, index) => `
+                <div class="elemento-modal actividad-modal">
+                    <div class="elemento-modal-info">
+                        <strong>${actividad.nombre}</strong>
+                        ${actividad.duracion ? `<span>⏱️ ${actividad.duracion}</span>` : ''}
+                        ${actividad.costo > 0 ? 
+                            `<span class="precio-modal">${actividad.moneda} ${actividad.costo.toLocaleString()}</span>` : 
+                            '<span class="gratis-modal">Gratis</span>'
+                        }
+                        ${actividad.descripcion ? `<span class="descripcion-modal">${actividad.descripcion}</span>` : ''}
+                    </div>
+                    <div class="elemento-modal-acciones">
+                        <button onclick="editarActividadEnModal(${index})" class="btn-modal-edit">✏️</button>
+                        <button onclick="eliminarActividadEnModal(${index})" class="btn-modal-delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Funciones del calendario en modal
+        window.selectFechaModal = function(fecha) {
+            if (!esFechaDeViaje(fecha)) return;
+            
+            if (!window.modalSelectedStart) {
+                window.modalSelectedStart = fecha;
+                window.modalSelectedEnd = null;
+            } else if (!window.modalSelectedEnd && fecha > window.modalSelectedStart) {
+                window.modalSelectedEnd = fecha;
+            } else {
+                window.modalSelectedStart = fecha;
+                window.modalSelectedEnd = null;
+            }
+            
+            updateModalCalendar();
+        };
+
+        function updateModalCalendar() {
+            // Actualizar clases de los días
+            document.querySelectorAll('.dia-modal').forEach(dia => {
+                const fecha = dia.getAttribute('data-fecha');
+                dia.classList.remove('dia-modal-seleccionado', 'dia-modal-en-rango');
+                
+                if (fecha === window.modalSelectedStart || fecha === window.modalSelectedEnd) {
+                    dia.classList.add('dia-modal-seleccionado');
+                } else if (window.modalSelectedStart && window.modalSelectedEnd && 
+                          fecha > window.modalSelectedStart && fecha < window.modalSelectedEnd) {
+                    dia.classList.add('dia-modal-en-rango');
+                }
+            });
+            
+            // Actualizar displays
+            const inicioElement = document.getElementById('modal-inicio');
+            const finElement = document.getElementById('modal-fin');
+            const duracionElement = document.getElementById('duracion-calculada');
+            
+            if (inicioElement) {
+                inicioElement.textContent = window.modalSelectedStart ? 
+                    formatDateLong(window.modalSelectedStart) : 'Selecciona fecha';
+            }
+            
+            if (finElement) {
+                finElement.textContent = window.modalSelectedEnd ? 
+                    formatDateLong(window.modalSelectedEnd) : 'Selecciona fecha';
+            }
+            
+            if (duracionElement) {
+                duracionElement.textContent = window.modalSelectedStart && window.modalSelectedEnd ? 
+                    calcularDias(window.modalSelectedStart, window.modalSelectedEnd) + ' días' : '';
+            }
+        }
+
+        // Funciones para agregar elementos en el modal
+        window.agregarHotelEnModal = function() {
+            if (!window.modalSelectedStart || !window.modalSelectedEnd) {
+                alert('Primero selecciona las fechas de la estancia');
+                return;
+            }
+            
+            const miniModal = document.createElement('div');
+            miniModal.className = 'mini-modal';
+            miniModal.innerHTML = `
+                <div class="mini-modal-content">
+                    <h4>🏨 Agregar Hotel</h4>
+                    <form id="hotelMiniForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre del hotel:</label>
+                                <input type="text" id="hotelNombre" placeholder="Ej: Holiday Inn Airport" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de habitación:</label>
+                                <select id="hotelTipo">
+                                    <option value="Estándar">Estándar</option>
+                                    <option value="Doble">Doble</option>
+                                    <option value="Triple">Triple</option>
+                                    <option value="Familiar">Familiar</option>
+                                    <option value="Suite">Suite</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Check-in:</label>
+                                <input type="date" id="hotelCheckIn" value="${window.modalSelectedStart}" min="${window.modalSelectedStart}" max="${window.modalSelectedEnd}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Check-out:</label>
+                                <input type="date" id="hotelCheckOut" value="${window.modalSelectedEnd}" min="${window.modalSelectedStart}" max="${window.modalSelectedEnd}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Habitaciones:</label>
+                                <input type="number" id="hotelCantidad" value="1" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Desayuno:</label>
+                                <select id="hotelDesayuno">
+                                    <option value="true">✅ Sí incluido</option>
+                                    <option value="false">❌ No incluido</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="hotelMoneda" onchange="calcularConversionMini()">
+                                    <option value="MXN">🇲🇽 Pesos MXN</option>
+                                    <option value="USD">🇺🇸 Dólares USD</option>
+                                    <option value="EUR">🇪🇺 Euros EUR</option>
+                                    <option value="CHF">🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Costo total:</label>
+                                <input type="number" id="hotelCosto" required onchange="calcularConversionMini()">
+                                <div id="conversionMini" class="conversion-preview"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notas (opcional):</label>
+                            <input type="text" id="hotelNotas" placeholder="WiFi gratis, piscina, etc.">
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Agregar</button>
+                            <button type="button" onclick="closeMiniModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(miniModal);
+            
+            window.calcularConversionMini = function() {
+                const costo = parseFloat(document.getElementById('hotelCosto').value) || 0;
+                const moneda = document.getElementById('hotelMoneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionMini').innerHTML = 
+                    costo > 0 ? `≈ ${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            document.getElementById('hotelMiniForm').onsubmit = function(e) {
                 e.preventDefault();
                 
-                const fechaInicioFinal = document.getElementById('modal-fecha-inicio').getAttribute('data-fecha') || fechaInicio;
-                const fechaFinFinal = document.getElementById('modal-fecha-fin').getAttribute('data-fecha') || fechaFin;
-                
-                if (!fechaInicioFinal || !fechaFinFinal) {
-                    alert('Por favor selecciona las fechas de la estancia');
-                    return;
-                }
-                
-                const nuevaEstancia = {
-                    fechaInicio: fechaInicioFinal,
-                    fechaFin: fechaFinFinal,
-                    destino: document.getElementById('destino').value,
-                    notas: document.getElementById('notas').value,
-                    hoteles: [],
-                    transportes: [],
-                    actividades: []
+                const nuevoHotel = {
+                    nombre: document.getElementById('hotelNombre').value,
+                    tipoHabitacion: document.getElementById('hotelTipo').value,
+                    fechaInicio: document.getElementById('hotelCheckIn').value,
+                    fechaFin: document.getElementById('hotelCheckOut').value,
+                    cantidadHabitaciones: parseInt(document.getElementById('hotelCantidad').value),
+                    desayunoIncluido: document.getElementById('hotelDesayuno').value === 'true',
+                    moneda: document.getElementById('hotelMoneda').value,
+                    costo: parseFloat(document.getElementById('hotelCosto').value),
+                    notas: document.getElementById('hotelNotas').value
                 };
                 
-                if (!viajeData.estancias) viajeData.estancias = [];
-                
-                if (estancia) {
-                    // Mantener elementos existentes al editar
-                    nuevaEstancia.hoteles = estancia.hoteles || [];
-                    nuevaEstancia.transportes = estancia.transportes || [];
-                    nuevaEstancia.actividades = estancia.actividades || [];
-                    viajeData.estancias[estanciaIndex] = nuevaEstancia;
-                } else {
-                    viajeData.estancias.push(nuevaEstancia);
-                }
-                
-                selectedStartDate = null;
-                selectedEndDate = null;
-                
-                saveData('viajeData', viajeData);
-                closeModal();
-                renderApp();
+                window.modalHoteles.push(nuevoHotel);
+                document.getElementById('hoteles-lista').innerHTML = renderHotelesEnModal(window.modalHoteles);
+                closeMiniModal();
             };
-        }
+        };
+
+        window.agregarTransporteEnModal = function() {
+            if (!window.modalSelectedStart || !window.modalSelectedEnd) {
+                alert('Primero selecciona las fechas de la estancia');
+                return;
+            }
+            
+            const miniModal = document.createElement('div');
+            miniModal.className = 'mini-modal';
+            miniModal.innerHTML = `
+                <div class="mini-modal-content">
+                    <h4>✈️ Agregar Transporte</h4>
+                    <form id="transporteMiniForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo:</label>
+                                <select id="transporteTipo" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Avión">✈️ Avión</option>
+                                    <option value="Tren">🚂 Tren</option>
+                                    <option value="Autobús">🚌 Autobús</option>
+                                    <option value="Auto">🚗 Auto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha:</label>
+                                <input type="date" id="transporteFecha" value="${window.modalSelectedStart}" min="${window.modalSelectedStart}" max="${window.modalSelectedEnd}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Origen:</label>
+                                <input type="text" id="transporteOrigen" placeholder="Ciudad de origen" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Destino:</label>
+                                <input type="text" id="transporteDestino" placeholder="Ciudad de destino" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Hora (opcional):</label>
+                                <input type="time" id="transporteHora">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="transporteMoneda" onchange="calcularConversionTransporteMini()">
+                                    <option value="MXN">🇲🇽 Pesos MXN</option>
+                                    <option value="USD">🇺🇸 Dólares USD</option>
+                                    <option value="EUR">🇪🇺 Euros EUR</option>
+                                    <option value="CHF">🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo (para 4 personas):</label>
+                            <input type="number" id="transporteCosto" required onchange="calcularConversionTransporteMini()">
+                            <div id="conversionTransporteMini" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notas (opcional):</label>
+                            <input type="text" id="transporteNotas" placeholder="Detalles adicionales">
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Agregar</button>
+                            <button type="button" onclick="closeMiniModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(miniModal);
+            
+            window.calcularConversionTransporteMini = function() {
+                const costo = parseFloat(document.getElementById('transporteCosto').value) || 0;
+                const moneda = document.getElementById('transporteMoneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionTransporteMini').innerHTML = 
+                    costo > 0 ? `≈ ${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            document.getElementById('transporteMiniForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevoTransporte = {
+                    tipo: document.getElementById('transporteTipo').value,
+                    fecha: document.getElementById('transporteFecha').value,
+                    origen: document.getElementById('transporteOrigen').value,
+                    destino: document.getElementById('transporteDestino').value,
+                    hora: document.getElementById('transporteHora').value,
+                    moneda: document.getElementById('transporteMoneda').value,
+                    costo: parseFloat(document.getElementById('transporteCosto').value),
+                    notas: document.getElementById('transporteNotas').value
+                };
+                
+                window.modalTransportes.push(nuevoTransporte);
+                document.getElementById('transportes-lista').innerHTML = renderTransportesEnModal(window.modalTransportes);
+                closeMiniModal();
+            };
+        };
+
+        window.agregarActividadEnModal = function() {
+            const miniModal = document.createElement('div');
+            miniModal.className = 'mini-modal';
+            miniModal.innerHTML = `
+                <div class="mini-modal-content">
+                    <h4>🎯 Agregar Actividad</h4>
+                    <form id="actividadMiniForm">
+                        <div class="form-group">
+                            <label>Nombre de la actividad:</label>
+                            <input type="text" id="actividadNombre" placeholder="Ej: Visita al Duomo, Tour en gondola" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Descripción (opcional):</label>
+                            <textarea id="actividadDescripcion" rows="2" placeholder="Detalles de la actividad"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Duración:</label>
+                                <input type="text" id="actividadDuracion" placeholder="Ej: 2 horas, Medio día">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="actividadMoneda" onchange="calcularConversionActividadMini()">
+                                    <option value="MXN">🇲🇽 Pesos MXN</option>
+                                    <option value="USD">🇺🇸 Dólares USD</option>
+                                    <option value="EUR">🇪🇺 Euros EUR</option>
+                                    <option value="CHF">🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo (opcional, para 4 personas):</label>
+                            <input type="number" id="actividadCosto" min="0" value="0" onchange="calcularConversionActividadMini()">
+                            <div id="conversionActividadMini" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Agregar</button>
+                            <button type="button" onclick="closeMiniModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(miniModal);
+            
+            window.calcularConversionActividadMini = function() {
+                const costo = parseFloat(document.getElementById('actividadCosto').value) || 0;
+                const moneda = document.getElementById('actividadMoneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionActividadMini').innerHTML = 
+                    costo > 0 ? `≈ ${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            document.getElementById('actividadMiniForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevaActividad = {
+                    nombre: document.getElementById('actividadNombre').value,
+                    descripcion: document.getElementById('actividadDescripcion').value,
+                    duracion: document.getElementById('actividadDuracion').value,
+                    moneda: document.getElementById('actividadMoneda').value,
+                    costo: parseFloat(document.getElementById('actividadCosto').value) || 0
+                };
+                
+                window.modalActividades.push(nuevaActividad);
+                document.getElementById('actividades-lista').innerHTML = renderActividadesEnModal(window.modalActividades);
+                closeMiniModal();
+            };
+        };
+
+        // Funciones para guardar la estancia completa
+        window.guardarEstancia = function() {
+            if (!window.modalSelectedStart || !window.modalSelectedEnd) {
+                alert('Por favor selecciona las fechas de la estancia');
+                return;
+            }
+            
+            const destino = document.getElementById('destino').value;
+            if (!destino.trim()) {
+                alert('Por favor ingresa el destino de la estancia');
+                return;
+            }
+            
+            const nuevaEstancia = {
+                fechaInicio: window.modalSelectedStart,
+                fechaFin: window.modalSelectedEnd,
+                destino: destino,
+                notas: document.getElementById('notas').value,
+                hoteles: window.modalHoteles,
+                transportes: window.modalTransportes,
+                actividades: window.modalActividades
+            };
+            
+            if (!viajeData.estancias) viajeData.estancias = [];
+            
+            if (window.modalEstancia) {
+                viajeData.estancias[window.modalEstanciaIndex] = nuevaEstancia;
+            } else {
+                viajeData.estancias.push(nuevaEstancia);
+            }
+            
+            // Limpiar variables globales
+            selectedStartDate = null;
+            selectedEndDate = null;
+            
+            saveData('viajeData', viajeData);
+            closeModal();
+            renderApp();
+        };
+
+        // Funciones auxiliares para el modal
+        window.closeMiniModal = function() {
+            const miniModal = document.querySelector('.mini-modal');
+            if (miniModal) miniModal.remove();
+        };
+
+        // Funciones de eliminación en modal
+        window.eliminarHotelEnModal = function(index) {
+            if (confirm('¿Eliminar este hotel?')) {
+                window.modalHoteles.splice(index, 1);
+                document.getElementById('hoteles-lista').innerHTML = renderHotelesEnModal(window.modalHoteles);
+            }
+        };
+
+        window.eliminarTransporteEnModal = function(index) {
+            if (confirm('¿Eliminar este transporte?')) {
+                window.modalTransportes.splice(index, 1);
+                document.getElementById('transportes-lista').innerHTML = renderTransportesEnModal(window.modalTransportes);
+            }
+        };
+
+        window.eliminarActividadEnModal = function(index) {
+            if (confirm('¿Eliminar esta actividad?')) {
+                window.modalActividades.splice(index, 1);
+                document.getElementById('actividades-lista').innerHTML = renderActividadesEnModal(window.modalActividades);
+            }
+        };
+
+        // Placeholder para funciones de edición (se pueden implementar después)
+        window.editarHotelEnModal = function(index) {
+            alert('Función de edición en desarrollo');
+        };
+
+        window.editarTransporteEnModal = function(index) {
+            alert('Función de edición en desarrollo');
+        };
+
+        window.editarActividadEnModal = function(index) {
+            alert('Función de edición en desarrollo');
+        };
 
         function renderMiniCalendario(fechaInicio, fechaFin) {
             // Implementación simplificada del mini calendario
@@ -2305,7 +2876,347 @@
             font-weight: 600;
         }
         
-        /* Modal mejorado */
+        /* Modal de estancia mejorado */
+        .estancia-modal {
+            max-width: 1000px !important;
+            max-height: 95vh;
+        }
+        
+        .estancia-form-container {
+            display: grid;
+            gap: 24px;
+        }
+        
+        .calendario-integrado {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .calendario-integrado h4 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+        
+        .mini-calendario-completo {
+            margin-bottom: 16px;
+        }
+        
+        .meses-modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .mes-modal {
+            text-align: center;
+        }
+        
+        .mes-modal-titulo {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .dias-semana-modal {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+        
+        .dias-semana-modal span {
+            padding: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #718096;
+        }
+        
+        .dias-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        
+        .dia-modal, .dia-modal-vacio {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .dia-modal {
+            background: #fff;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .dia-modal:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+        
+        .dia-modal-viaje {
+            background: #e6fffa !important;
+            color: #285e61 !important;
+            border-color: #4fd1c7 !important;
+        }
+        
+        .dia-modal-ocupado {
+            background: #667eea !important;
+            color: white !important;
+            font-weight: 700;
+        }
+        
+        .dia-modal-seleccionado {
+            background: #38a169 !important;
+            color: white !important;
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(56, 161, 105, 0.3);
+        }
+        
+        .dia-modal-en-rango {
+            background: #c6f6d5 !important;
+            color: #22543d !important;
+        }
+        
+        .fechas-seleccionadas-modal {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .fecha-display {
+            text-align: center;
+        }
+        
+        .fecha-label {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        
+        .fecha-value {
+            display: block;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .duracion-display {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #059669;
+            margin-top: 8px;
+        }
+        
+        .info-basica {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .info-basica h4 {
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+        
+        .seccion-elementos {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .seccion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .seccion-header h4 {
+            color: #2d3748;
+            font-size: 16px;
+        }
+        
+        .btn-agregar {
+            background: #38a169;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-agregar:hover {
+            background: #2f855a;
+        }
+        
+        .elementos-lista {
+            display: grid;
+            gap: 12px;
+            min-height: 60px;
+        }
+        
+        .no-elementos-modal {
+            color: #a0aec0;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #e2e8f0;
+        }
+        
+        .elemento-modal {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: all 0.2s;
+        }
+        
+        .elemento-modal:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .elemento-modal-info {
+            flex: 1;
+        }
+        
+        .elemento-modal-info strong {
+            display: block;
+            color: #1a202c;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .elemento-modal-info span {
+            display: block;
+            color: #4a5568;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        
+        .precio-modal {
+            color: #059669 !important;
+            font-weight: 600;
+        }
+        
+        .gratis-modal {
+            color: #38a169 !important;
+            font-weight: 500;
+        }
+        
+        .desayuno-modal.incluido {
+            color: #38a169 !important;
+        }
+        
+        .desayuno-modal.no-incluido {
+            color: #e53e3e !important;
+        }
+        
+        .descripcion-modal {
+            color: #6b7280 !important;
+            font-style: italic;
+        }
+        
+        .elemento-modal-acciones {
+            display: flex;
+            gap: 4px;
+            margin-left: 12px;
+        }
+        
+        .btn-modal-edit, .btn-modal-delete {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        
+        .btn-modal-edit {
+            color: #4a5568;
+        }
+        
+        .btn-modal-edit:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .btn-modal-delete {
+            color: #c53030;
+            border-color: #fed7d7;
+            background: #fed7d7;
+        }
+        
+        .btn-modal-delete:hover {
+            background: #feb2b2;
+        }
+        
+        /* Mini modal para agregar elementos */
+        .mini-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            padding: 20px;
+        }
+        
+        .mini-modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            animation: miniModalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes miniModalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .mini-modal-content h4 {
+            color: #1a202c;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
         .modal {
             position: fixed;
             top: 0;
@@ -2510,6 +3421,16 @@
                 gap: 30px;
             }
             
+            .meses-modal-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .fechas-seleccionadas-modal {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
             .seleccion-fechas {
                 flex-direction: column;
                 align-items: stretch;
@@ -2545,6 +3466,19 @@
             .form-buttons {
                 flex-direction: column;
             }
+            
+            .estancia-modal {
+                max-width: 95% !important;
+                margin: 10px;
+            }
+            
+            .estancia-form-container {
+                gap: 16px;
+            }
+            
+            .calendario-integrado, .info-basica, .seccion-elementos {
+                padding: 16px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -2553,6 +3487,14 @@
             }
             
             .modal-content {
+                padding: 16px;
+            }
+            
+            .mini-modal {
+                padding: 10px;
+            }
+            
+            .mini-modal-content {
                 padding: 16px;
             }
             
@@ -2570,6 +3512,23 @@
             
             .estancia-header-main {
                 padding: 20px;
+            }
+            
+            .elemento-modal {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .elemento-modal-acciones {
+                margin-left: 0;
+                justify-content: flex-end;
+            }
+            
+            .seccion-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
             }
         }
     </style>
