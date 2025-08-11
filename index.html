@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Viaje Familiar - Italia y Suiza</title>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, push } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAI2ofzM5BdlqK7glDAz5OPZ-L5Oslf_28",
+            authDomain: "euro-trip-2025.firebaseapp.com",
+            databaseURL: "https://euro-trip-2025-default-rtdb.firebaseio.com/",
+            projectId: "euro-trip-2025",
+            storageBucket: "euro-trip-2025.firebasestorage.app",
+            messagingSenderId: "218713594766",
+            appId: "1:218713594766:web:e84557d13d976e327d62df"
+        };
+
+        // Initialize Firebase
+        let app, database;
+        let isFirebaseConnected = false;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            isFirebaseConnected = true;
+            console.log('Firebase conectado correctamente');
+        } catch (error) {
+            console.log('Firebase no configurado, usando almacenamiento local');
+            isFirebaseConnected = false;
+        }
+
+        // Datos iniciales del viaje
+        const initialData = {
+            viaje: {
+                titulo: "Viaje Familiar - Italia y Suiza",
+                fechaInicio: "2024-12-20",
+                fechaFin: "2025-01-06",
+                presupuestoTotal: 500000
+            },
+            itinerario: [
+                {
+                    id: 1,
+                    fecha: "2024-12-20",
+                    ciudad: "Zurich",
+                    pais: "Suiza",
+                    llegada: "Llegada",
+                    salida: "",
+                    noches: 1,
+                    hotel: "Hotel Zurich Centro",
+                    costoHotel: 15000,
+                    transporte: "Vuelo México - Zurich",
+                    costoTransporte: 50000,
+                    actividades: ["Casco histórico", "Lago Zurich", "Bahnhofstrasse"],
+                    notas: "Desayuno incluido"
+                },
+                {
+                    id: 2,
+                    fecha: "2024-12-21",
+                    ciudad: "Zurich",
+                    pais: "Suiza",
+                    llegada: "",
+                    salida: "",
+                    noches: 1,
+                    hotel: "Hotel Zurich Centro",
+                    costoHotel: 15000,
+                    transporte: "",
+                    costoTransporte: 0,
+                    actividades: ["Museo Nacional Suizo", "Jardín Botánico", "Lucerna (día completo)"],
+                    notas: "Excursión a Lucerna"
+                },
+                {
+                    id: 3,
+                    fecha: "2024-12-22",
+                    ciudad: "Zurich",
+                    pais: "Suiza",
+                    llegada: "",
+                    salida: "Hacia St Moritz",
+                    noches: 0,
+                    hotel: "",
+                    costoHotel: 0,
+                    transporte: "Tren a St Moritz",
+                    costoTransporte: 8100,
+                    actividades: ["Viaje panorámico en tren"],
+                    notas: "Día de viaje"
+                },
+                {
+                    id: 4,
+                    fecha: "2024-12-23",
+                    ciudad: "St Moritz",
+                    pais: "Suiza",
+                    llegada: "Desde Zurich",
+                    salida: "",
+                    noches: 2,
+                    hotel: "Hotel St Moritz",
+                    costoHotel: 25000,
+                    transporte: "",
+                    costoTransporte: 0,
+                    actividades: ["Esquí", "Lago St Moritz", "Compras"],
+                    notas: "Navidad en los Alpes"
+                },
+                {
+                    id: 5,
+                    fecha: "2024-12-25",
+                    ciudad: "St Moritz",
+                    pais: "Suiza",
+                    llegada: "",
+                    salida: "Hacia Milan",
+                    noches: 0,
+                    hotel: "",
+                    costoHotel: 0,
+                    transporte: "Tren directo St Moritz - Milan",
+                    costoTransporte: 6000,
+                    actividades: ["Tirano - Milan en tren"],
+                    notas: "Viaje escénico"
+                },
+                {
+                    id: 6,
+                    fecha: "2024-12-26",
+                    ciudad: "Milan",
+                    pais: "Italia",
+                    llegada: "Desde St Moritz",
+                    salida: "",
+                    noches: 1,
+                    hotel: "Hotel Milan Centro",
+                    costoHotel: 12000,
+                    transporte: "",
+                    costoTransporte: 0,
+                    actividades: ["Duomo", "La Scala", "Galleria Vittorio Emanuele"],
+                    notas: "Día completo en Milan"
+                },
+                {
+                    id: 7,
+                    fecha: "2024-12-27",
+                    ciudad: "Milan/Turin",
+                    pais: "Italia",
+                    llegada: "",
+                    salida: "",
+                    noches: 1,
+                    hotel: "Hotel Turin",
+                    costoHotel: 8000,
+                    transporte: "Tren directo Milan - Turin",
+                    costoTransporte: 2000,
+                    actividades: ["Palazzo Reale", "Mole Antonelliana", "Centro histórico"],
+                    notas: ""
+                }
+            ],
+            presupuesto: {
+                transporte: 0,
+                alojamiento: 0,
+                actividades: 0,
+                comida: 0,
+                otros: 0
+            }
+        };
+
+        // Función para guardar datos
+        async function saveData(path, data) {
+            if (isFirebaseConnected) {
+                try {
+                    await set(ref(database, path), data);
+                    console.log('Datos guardados en Firebase');
+                } catch (error) {
+                    console.error('Error guardando en Firebase:', error);
+                    localStorage.setItem(path, JSON.stringify(data));
+                }
+            } else {
+                localStorage.setItem(path, JSON.stringify(data));
+            }
+        }
+
+        // Función para cargar datos
+        async function loadData(path) {
+            if (isFirebaseConnected) {
+                try {
+                    const snapshot = await get(ref(database, path));
+                    if (snapshot.exists()) {
+                        return snapshot.val();
+                    }
+                } catch (error) {
+                    console.error('Error cargando de Firebase:', error);
+                }
+            }
+            
+            const localData = localStorage.getItem(path);
+            return localData ? JSON.parse(localData) : null;
+        }
+
+        // Variables globales
+        let viajeData = {};
+
+        // Inicializar la aplicación cuando se carga la página
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Cargar datos o usar datos iniciales
+            const savedData = await loadData('viajeData');
+            viajeData = savedData || initialData;
+            
+            // Si no hay datos guardados, guardar los iniciales
+            if (!savedData) {
+                await saveData('viajeData', viajeData);
+            }
+
+            renderApp();
+            calcularPresupuesto();
+        });
+
+        // Función para renderizar la aplicación
+        function renderApp() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="container">
+                    <header class="header">
+                        <h1>${viajeData.viaje.titulo}</h1>
+                        <p>${formatDate(viajeData.viaje.fechaInicio)} - ${formatDate(viajeData.viaje.fechaFin)}</p>
+                        <div class="status">
+                            ${isFirebaseConnected ? 
+                                '<span class="connected">🟢 Conectado a Firebase</span>' : 
+                                '<span class="offline">🔴 Modo Offline (LocalStorage)</span>'
+                            }
+                        </div>
+                    </header>
+
+                    <nav class="tabs">
+                        <button class="tab-btn active" onclick="showTab('itinerario')">📅 Itinerario</button>
+                        <button class="tab-btn" onclick="showTab('presupuesto')">💰 Presupuesto</button>
+                        <button class="tab-btn" onclick="showTab('actividades')">🎯 Actividades</button>
+                        <button class="tab-btn" onclick="showTab('configuracion')">⚙️ Config</button>
+                    </nav>
+
+                    <main>
+                        <div id="itinerario" class="tab-content active">
+                            ${renderItinerario()}
+                        </div>
+                        
+                        <div id="presupuesto" class="tab-content">
+                            ${renderPresupuesto()}
+                        </div>
+                        
+                        <div id="actividades" class="tab-content">
+                            ${renderActividades()}
+                        </div>
+                        
+                        <div id="configuracion" class="tab-content">
+                            ${renderConfiguracion()}
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+
+        // Función para renderizar el itinerario
+        function renderItinerario() {
+            return `
+                <div class="itinerario-container">
+                    <div class="timeline">
+                        ${viajeData.itinerario.map(dia => `
+                            <div class="day-card" data-id="${dia.id}">
+                                <div class="day-header">
+                                    <div class="day-date">
+                                        <strong>${formatDate(dia.fecha)}</strong>
+                                        <span class="day-number">Día ${dia.id}</span>
+                                    </div>
+                                    <div class="city-info">
+                                        <h3>${dia.ciudad}, ${dia.pais}</h3>
+                                        ${dia.noches > 0 ? `<span class="nights">${dia.noches} noche${dia.noches > 1 ? 's' : ''}</span>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="day-details">
+                                    <div class="section">
+                                        <h4>🚗 Transporte</h4>
+                                        <p>${dia.transporte || 'No hay transporte'}</p>
+                                        ${dia.costoTransporte > 0 ? `<span class="cost">$${dia.costoTransporte.toLocaleString()}</span>` : ''}
+                                    </div>
+                                    
+                                    ${dia.hotel ? `
+                                        <div class="section">
+                                            <h4>🏨 Alojamiento</h4>
+                                            <p>${dia.hotel}</p>
+                                            ${dia.costoHotel > 0 ? `<span class="cost">$${dia.costoHotel.toLocaleString()}</span>` : ''}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div class="section">
+                                        <h4>🎯 Actividades</h4>
+                                        <ul>
+                                            ${dia.actividades.map(actividad => `<li>${actividad}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    
+                                    ${dia.notas ? `
+                                        <div class="section">
+                                            <h4>📝 Notas</h4>
+                                            <p>${dia.notas}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="day-actions">
+                                    <button onclick="editDay(${dia.id})" class="btn-edit">✏️ Editar</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <button onclick="addDay()" class="btn-add">➕ Agregar Día</button>
+                </div>
+            `;
+        }
+
+        // Función para renderizar el presupuesto
+        function renderPresupuesto() {
+            const totales = calcularPresupuesto();
+            
+            return `
+                <div class="presupuesto-container">
+                    <div class="budget-summary">
+                        <div class="budget-card total">
+                            <h3>Total del Viaje</h3>
+                            <div class="amount">$${totales.total.toLocaleString()}</div>
+                            <div class="remaining">
+                                Presupuesto: $${viajeData.viaje.presupuestoTotal.toLocaleString()}
+                                <br>
+                                <span class="${totales.total <= viajeData.viaje.presupuestoTotal ? 'positive' : 'negative'}">
+                                    ${totales.total <= viajeData.viaje.presupuestoTotal ? 'Restante' : 'Excedente'}: 
+                                    $${Math.abs(viajeData.viaje.presupuestoTotal - totales.total).toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="budget-breakdown">
+                        <div class="budget-item">
+                            <div class="category">🚗 Transporte</div>
+                            <div class="amount">$${totales.transporte.toLocaleString()}</div>
+                            <div class="percentage">${((totales.transporte / totales.total) * 100).toFixed(1)}%</div>
+                        </div>
+                        
+                        <div class="budget-item">
+                            <div class="category">🏨 Alojamiento</div>
+                            <div class="amount">$${totales.alojamiento.toLocaleString()}</div>
+                            <div class="percentage">${((totales.alojamiento / totales.total) * 100).toFixed(1)}%</div>
+                        </div>
+                        
+                        <div class="budget-item">
+                            <div class="category">🍽️ Comida estimada</div>
+                            <div class="amount">$${totales.comidaEstimada.toLocaleString()}</div>
+                            <div class="percentage">${((totales.comidaEstimada / totales.total) * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="budget-details">
+                        <h3>Detalles por Día</h3>
+                        ${viajeData.itinerario.map(dia => {
+                            const costoTotal = dia.costoTransporte + dia.costoHotel;
+                            return costoTotal > 0 ? `
+                                <div class="day-budget">
+                                    <div class="day-info">
+                                        <strong>${dia.ciudad}</strong> - ${formatDate(dia.fecha)}
+                                    </div>
+                                    <div class="day-costs">
+                                        ${dia.costoTransporte > 0 ? `<span>Transporte: $${dia.costoTransporte.toLocaleString()}</span>` : ''}
+                                        ${dia.costoHotel > 0 ? `<span>Hotel: $${dia.costoHotel.toLocaleString()}</span>` : ''}
+                                        <strong>Total: $${costoTotal.toLocaleString()}</strong>
+                                    </div>
+                                </div>
+                            ` : '';
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para renderizar actividades
+        function renderActividades() {
+            const ciudades = [...new Set(viajeData.itinerario.map(dia => dia.ciudad))];
+            
+            return `
+                <div class="actividades-container">
+                    ${ciudades.map(ciudad => {
+                        const diasEnCiudad = viajeData.itinerario.filter(dia => dia.ciudad === ciudad);
+                        const todasActividades = diasEnCiudad.flatMap(dia => dia.actividades);
+                        
+                        return `
+                            <div class="city-activities">
+                                <h3>${ciudad}</h3>
+                                <div class="activities-grid">
+                                    ${todasActividades.map(actividad => `
+                                        <div class="activity-card">
+                                            <div class="activity-name">${actividad}</div>
+                                            <div class="activity-actions">
+                                                <button onclick="markActivityDone('${ciudad}', '${actividad}')" class="btn-small">✅</button>
+                                                <button onclick="editActivity('${ciudad}', '${actividad}')" class="btn-small">✏️</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <button onclick="addActivity('${ciudad}')" class="btn-add-small">➕ Agregar actividad</button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Función para renderizar configuración
+        function renderConfiguracion() {
+            return `
+                <div class="config-container">
+                    <div class="config-section">
+                        <h3>🔧 Configuración de Firebase</h3>
+                        <p>Para guardar tus datos permanentemente, necesitas configurar Firebase:</p>
+                        <ol>
+                            <li>Ve a <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
+                            <li>Crea un nuevo proyecto</li>
+                            <li>Activa Realtime Database</li>
+                            <li>Copia tu configuración aquí:</li>
+                        </ol>
+                        
+                        <div class="firebase-config">
+                            <textarea id="firebaseConfig" placeholder="Pega aquí tu configuración de Firebase..." rows="10"></textarea>
+                            <button onclick="updateFirebaseConfig()" class="btn">💾 Actualizar Configuración</button>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h3>📊 Gestión de Datos</h3>
+                        <div class="data-actions">
+                            <button onclick="exportData()" class="btn">📤 Exportar Datos</button>
+                            <button onclick="importData()" class="btn">📥 Importar Datos</button>
+                            <button onclick="resetData()" class="btn btn-danger">🗑️ Reiniciar Todo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h3>ℹ️ Información</h3>
+                        <p><strong>Versión:</strong> 1.0.0</p>
+                        <p><strong>Estado:</strong> ${isFirebaseConnected ? 'Conectado a Firebase' : 'Modo Offline'}</p>
+                        <p><strong>Última actualización:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para calcular presupuesto
+        function calcularPresupuesto() {
+            const transporte = viajeData.itinerario.reduce((sum, dia) => sum + dia.costoTransporte, 0);
+            const alojamiento = viajeData.itinerario.reduce((sum, dia) => sum + dia.costoHotel, 0);
+            const diasViaje = viajeData.itinerario.length;
+            const comidaEstimada = diasViaje * 2000; // Estimación de $2000 por día por persona
+            
+            const total = transporte + alojamiento + comidaEstimada;
+            
+            return {
+                transporte,
+                alojamiento,
+                comidaEstimada,
+                total
+            };
+        }
+
+        // Función para formatear fechas
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        // Funciones de la interfaz
+        window.showTab = function(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar la pestaña seleccionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        window.editDay = function(dayId) {
+            alert('Función de edición en desarrollo');
+        };
+
+        window.addDay = function() {
+            alert('Función de agregar día en desarrollo');
+        };
+
+        window.addActivity = function(ciudad) {
+            const actividad = prompt(`Nueva actividad para ${ciudad}:`);
+            if (actividad) {
+                // Encontrar el día y agregar la actividad
+                const dia = viajeData.itinerario.find(d => d.ciudad === ciudad);
+                if (dia) {
+                    dia.actividades.push(actividad);
+                    saveData('viajeData', viajeData);
+                    renderApp();
+                }
+            }
+        };
+
+        window.exportData = function() {
+            const dataStr = JSON.stringify(viajeData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'viaje-datos.json';
+            link.click();
+        };
+
+        window.resetData = function() {
+            if (confirm('¿Estás seguro de que quieres reiniciar todos los datos?')) {
+                viajeData = initialData;
+                saveData('viajeData', viajeData);
+                renderApp();
+                calcularPresupuesto();
+            }
+        };
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .connected {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .offline {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .day-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .day-date {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .day-number {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .city-info h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .nights {
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        
+        .day-details {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .section h4 {
+            color: #34495e;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .section p, .section li {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .section li {
+            padding: 5px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .section li:last-child {
+            border-bottom: none;
+        }
+        
+        .cost {
+            background: #e8f5e8;
+            color: #27ae60;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .day-actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .btn-edit {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .presupuesto-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .budget-summary {
+            margin-bottom: 30px;
+        }
+        
+        .budget-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .budget-card h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .amount {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .remaining {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .positive {
+            color: #2ecc71;
+        }
+        
+        .negative {
+            color: #e74c3c;
+        }
+        
+        .budget-breakdown {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .budget-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .category {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .percentage {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .budget-details h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .day-budget {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .day-costs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .day-costs span {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .actividades-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .city-activities {
+            margin-bottom: 40px;
+        }
+        
+        .city-activities h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .activities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .activity-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .activity-name {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .activity-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-small {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-add-small {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .config-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .config-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .config-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .firebase-config textarea {
+            width: 100%;
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+        
+        .data-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .day-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .budget-item, .day-budget {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .data-actions {
+                flex-direction: column;
+            }
+            
+            .activities-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="loading">
+                <h2>Cargando gestor de viaje...</h2>
+                <p>Inicializando datos...</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
