@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planeador de Viaje - Europa 2025</title>
+    <title>Organizador de Viaje - Europa 2025</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
     
     <script type="module">
@@ -31,27 +31,21 @@
             console.error('Error Firebase:', error);
         }
 
-        // Nueva estructura limpia
+        // Estructura nueva y limpia
         const initialData = {
-            viaje: {
-                nombre: "Viaje Europa 2025",
-                fechaInicio: "2024-12-20",
-                fechaFin: "2025-01-06",
-                ciudades: [
-                    { nombre: "Zurich", pais: "Suiza", fechaLlegada: "2024-12-20", fechaSalida: "2024-12-22" },
-                    { nombre: "St Moritz", pais: "Suiza", fechaLlegada: "2024-12-22", fechaSalida: "2024-12-25" },
-                    { nombre: "Milan", pais: "Italia", fechaLlegada: "2024-12-25", fechaSalida: "2024-12-27" },
-                    { nombre: "Turin", pais: "Italia", fechaLlegada: "2024-12-27", fechaSalida: "2024-12-29" },
-                    { nombre: "Florencia", pais: "Italia", fechaLlegada: "2024-12-29", fechaSalida: "2024-12-31" },
-                    { nombre: "Pisa", pais: "Italia", fechaLlegada: "2024-12-31", fechaSalida: "2025-01-01" },
-                    { nombre: "Roma", pais: "Italia", fechaLlegada: "2025-01-01", fechaSalida: "2025-01-03" },
-                    { nombre: "Venecia", pais: "Italia", fechaLlegada: "2025-01-03", fechaSalida: "2025-01-05" },
-                    { nombre: "Verona", pais: "Italia", fechaLlegada: "2025-01-05", fechaSalida: "2025-01-06" }
-                ]
-            },
+            // Fechas fijas del viaje
+            fechaInicio: "2024-12-20", // Llegada a Zurich
+            fechaFin: "2025-01-06",   // Salida a Madrid
+            
+            // Períodos del itinerario (lo principal)
+            periodos: [],
+            
+            // Catálogos para seleccionar
             transportes: [],
             hoteles: [],
-            actividades: {},
+            actividades: [],
+            
+            // Presupuesto
             presupuesto: {
                 ingresos: [],
                 totalDisponible: 0
@@ -96,18 +90,18 @@
         function renderApp() {
             const app = document.getElementById('app');
             const totalDias = calcularDiasViaje();
-            const totalCiudades = (viajeData.viaje && viajeData.viaje.ciudades) ? viajeData.viaje.ciudades.length : 0;
+            const totalPeriodos = (viajeData.periodos || []).length;
             const totalCosto = calcularCostoTotal();
             
             app.innerHTML = `
                 <div class="header">
-                    <h1>🌍 Planeador de Viaje Europa 2025</h1>
-                    <div class="stats">
-                        <span class="stat">📅 ${totalDias} días</span>
-                        <span class="stat">🏙️ ${totalCiudades} ciudades</span>
-                        <span class="stat">💰 $${totalCosto.toLocaleString()}</span>
-                        <span class="stat ${isFirebaseConnected ? 'connected' : 'offline'}">
-                            ${isFirebaseConnected ? '🟢 Online' : '🔴 Offline'}
+                    <h1>🗺️ Organizador de Viaje Europa 2025</h1>
+                    <div class="info-viaje">
+                        <span class="fecha-viaje">📅 20 Dic 2024 - 6 Ene 2025</span>
+                        <span class="duracion">${totalDias} días en Europa</span>
+                        <span class="total-costo">💰 $${totalCosto.toLocaleString()}</span>
+                        <span class="status ${isFirebaseConnected ? 'online' : 'offline'}">
+                            ${isFirebaseConnected ? '🟢 Conectado' : '🔴 Offline'}
                         </span>
                     </div>
                 </div>
@@ -146,89 +140,102 @@
             return `
                 <div class="itinerario-container">
                     <div class="itinerario-header">
-                        <h3>📋 Vista General del Viaje</h3>
-                        <div class="date-range">
-                            <label>Fechas del viaje:</label>
-                            <input type="date" id="fechaInicio" value="${viajeData.viaje.fechaInicio}" onchange="updateFechaInicio()">
-                            <span>hasta</span>
-                            <input type="date" id="fechaFin" value="${viajeData.viaje.fechaFin}" onchange="updateFechaFin()">
-                        </div>
+                        <h3>📋 Planificación del Viaje</h3>
+                        <button onclick="addPeriodo()" class="btn-primary">➕ Agregar Período</button>
                     </div>
                     
-                    <div class="timeline">
-                        ${(viajeData.viaje && viajeData.viaje.ciudades || []).map((ciudad, index) => {
-                            const dias = calcularDiasEnCiudad(ciudad.fechaLlegada, ciudad.fechaSalida);
-                            const transporteStatus = getTransporteStatus(ciudad);
-                            const hotelStatus = getHotelStatus(ciudad);
-                            const actividades = viajeData.actividades[ciudad.nombre] || [];
-                            
-                            return `
-                                <div class="timeline-item">
-                                    <div class="timeline-marker">${index + 1}</div>
-                                    <div class="timeline-content">
-                                        <div class="city-header">
-                                            <h4>${ciudad.nombre}, ${ciudad.pais}</h4>
-                                            <span class="duration">${dias} día${dias > 1 ? 's' : ''}</span>
+                    ${(viajeData.periodos || []).length > 0 ? `
+                        <div class="periodos-lista">
+                            ${(viajeData.periodos || []).map((periodo, index) => `
+                                <div class="periodo-card">
+                                    <div class="periodo-header">
+                                        <div class="periodo-fechas">
+                                            <h4>${formatDate(periodo.fechaInicio)} - ${formatDate(periodo.fechaFin)}</h4>
+                                            <span class="duracion">${calcularDias(periodo.fechaInicio, periodo.fechaFin)} días</span>
                                         </div>
-                                        <div class="city-dates">
-                                            <span>📅 ${formatDate(ciudad.fechaLlegada)} - ${formatDate(ciudad.fechaSalida)}</span>
-                                        </div>
-                                        <div class="city-status">
-                                            <div class="status-item ${transporteStatus.class}">
-                                                ✈️ Transporte: ${transporteStatus.text}
-                                            </div>
-                                            <div class="status-item ${hotelStatus.class}">
-                                                🏨 Hotel: ${hotelStatus.text}
-                                            </div>
-                                            <div class="status-item ${actividades.length > 0 ? 'complete' : 'pending'}">
-                                                🎯 Actividades: ${actividades.length} planeadas
-                                            </div>
-                                        </div>
-                                        <div class="city-actions">
-                                            <button onclick="editCiudad(${index})" class="btn-small">✏️ Editar</button>
-                                            <button onclick="deleteCiudad(${index})" class="btn-small btn-danger">🗑️</button>
+                                        <div class="periodo-acciones">
+                                            <button onclick="editPeriodo(${index})" class="btn-edit">✏️</button>
+                                            <button onclick="deletePeriodo(${index})" class="btn-delete">🗑️</button>
                                         </div>
                                     </div>
+                                    
+                                    <div class="periodo-detalles">
+                                        <div class="detalle-item">
+                                            <span class="label">🏙️ Destino:</span>
+                                            <span class="value">${periodo.destino || 'No definido'}</span>
+                                        </div>
+                                        
+                                        <div class="detalle-item">
+                                            <span class="label">🏨 Hospedaje:</span>
+                                            <span class="value">${periodo.hotelId ? getHotelNombre(periodo.hotelId) : 'No definido'}</span>
+                                        </div>
+                                        
+                                        <div class="detalle-item">
+                                            <span class="label">✈️ Transporte:</span>
+                                            <span class="value">${periodo.transporteId ? getTransporteDescripcion(periodo.transporteId) : 'No definido'}</span>
+                                        </div>
+                                        
+                                        <div class="detalle-item">
+                                            <span class="label">🎯 Actividades:</span>
+                                            <span class="value">
+                                                ${periodo.actividadesIds && periodo.actividadesIds.length > 0 ? 
+                                                    periodo.actividadesIds.map(id => getActividadNombre(id)).join(', ') : 
+                                                    'No definidas'
+                                                }
+                                            </span>
+                                        </div>
+                                        
+                                        ${periodo.notas ? `
+                                            <div class="detalle-item">
+                                                <span class="label">📝 Notas:</span>
+                                                <span class="value">${periodo.notas}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
                                 </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    
-                    <div class="actions-bar">
-                        <button onclick="addCiudad()" class="btn-primary">➕ Agregar Ciudad</button>
-                        <button onclick="exportItinerario()" class="btn-secondary">📤 Exportar</button>
-                    </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="estado-vacio">
+                            <div class="icono-vacio">📅</div>
+                            <h3>¡Comienza a planificar tu viaje!</h3>
+                            <p>Agrega períodos a tu itinerario para organizar tu aventura por Europa</p>
+                            <button onclick="addPeriodo()" class="btn-primary">➕ Crear primer período</button>
+                        </div>
+                    `}
                 </div>
             `;
         }
 
         function renderTransportes() {
             return `
-                <div class="transportes-container">
+                <div class="section-container">
                     <div class="section-header">
-                        <h3>✈️ Transportes del Viaje</h3>
+                        <h3>✈️ Gestión de Transportes</h3>
                         <button onclick="addTransporte()" class="btn-primary">➕ Nuevo Transporte</button>
                     </div>
                     
-                    <div class="transportes-list">
+                    <div class="elementos-grid">
                         ${(viajeData.transportes || []).map(transporte => `
-                            <div class="transporte-card">
-                                <div class="transporte-header">
-                                    <div class="transporte-tipo ${transporte.tipo.toLowerCase()}">
+                            <div class="elemento-card transporte-card">
+                                <div class="elemento-header">
+                                    <div class="tipo-badge ${transporte.tipo.toLowerCase()}">
                                         ${getTransporteIcon(transporte.tipo)} ${transporte.tipo}
                                     </div>
-                                    <div class="transporte-costo">$${transporte.costo.toLocaleString()}</div>
+                                    <div class="costo">$${transporte.costo.toLocaleString()}</div>
                                 </div>
-                                <div class="transporte-ruta">
-                                    <strong>${transporte.origen} → ${transporte.destino}</strong>
+                                
+                                <div class="elemento-contenido">
+                                    <h4>${transporte.origen} → ${transporte.destino}</h4>
+                                    <div class="detalles">
+                                        ${transporte.fecha ? `<span>📅 ${formatDate(transporte.fecha)}</span>` : ''}
+                                        ${transporte.hora ? `<span>🕐 ${transporte.hora}</span>` : ''}
+                                        <span>👥 Para 4 personas</span>
+                                    </div>
+                                    ${transporte.notas ? `<p class="notas">${transporte.notas}</p>` : ''}
                                 </div>
-                                <div class="transporte-detalles">
-                                    <span>📅 ${formatDate(transporte.fecha)}</span>
-                                    ${transporte.hora ? `<span>🕐 ${transporte.hora}</span>` : ''}
-                                    <span>👥 4 personas</span>
-                                </div>
-                                ${transporte.notas ? `<div class="transporte-notas">${transporte.notas}</div>` : ''}
-                                <div class="transporte-actions">
+                                
+                                <div class="elemento-acciones">
                                     <button onclick="editTransporte('${transporte.id}')" class="btn-small">✏️</button>
                                     <button onclick="deleteTransporte('${transporte.id}')" class="btn-small btn-danger">🗑️</button>
                                 </div>
@@ -236,7 +243,7 @@
                         `).join('')}
                         
                         ${(viajeData.transportes || []).length === 0 ? 
-                            '<div class="empty-state">No hay transportes registrados</div>' : ''
+                            '<div class="empty-message">No hay transportes registrados</div>' : ''
                         }
                     </div>
                 </div>
@@ -245,36 +252,37 @@
 
         function renderHoteles() {
             return `
-                <div class="hoteles-container">
+                <div class="section-container">
                     <div class="section-header">
-                        <h3>🏨 Alojamientos del Viaje</h3>
-                        <button onclick="addHotel()" class="btn-primary">➕ Nueva Reservación</button>
+                        <h3>🏨 Gestión de Hoteles</h3>
+                        <button onclick="addHotel()" class="btn-primary">➕ Nuevo Hotel</button>
                     </div>
                     
-                    <div class="hoteles-list">
+                    <div class="elementos-grid">
                         ${(viajeData.hoteles || []).map(hotel => `
-                            <div class="hotel-card">
-                                <div class="hotel-header">
+                            <div class="elemento-card hotel-card">
+                                <div class="elemento-header">
                                     <div class="hotel-nombre">
                                         <h4>${hotel.nombre}</h4>
-                                        <span class="hotel-ciudad">${hotel.ciudad}</span>
+                                        <span class="ciudad">${hotel.ciudad}</span>
                                     </div>
-                                    <div class="hotel-costo">$${hotel.costoTotal.toLocaleString()}</div>
+                                    <div class="costo">$${hotel.costoTotal.toLocaleString()}</div>
                                 </div>
-                                <div class="hotel-fechas">
-                                    📅 ${formatDate(hotel.fechaCheckIn)} - ${formatDate(hotel.fechaCheckOut)}
-                                    <span class="noches">(${calcularNoches(hotel.fechaCheckIn, hotel.fechaCheckOut)} noches)</span>
+                                
+                                <div class="elemento-contenido">
+                                    <div class="detalles">
+                                        <span>🛏️ ${hotel.tipoHabitacion}</span>
+                                        <span>📦 ${hotel.cantidadHabitaciones} hab.</span>
+                                        <span class="desayuno ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
+                                            🍳 ${hotel.desayunoIncluido ? 'Con desayuno' : 'Sin desayuno'}
+                                        </span>
+                                    </div>
+                                    <div class="precio-detalle">
+                                        $${hotel.costoPorNoche.toLocaleString()} por noche
+                                    </div>
                                 </div>
-                                <div class="hotel-detalles">
-                                    <span>🛏️ ${hotel.tipoHabitacion} (${hotel.cantidadHabitaciones} hab.)</span>
-                                    <span class="desayuno ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
-                                        🍳 Desayuno ${hotel.desayunoIncluido ? 'incluido' : 'no incluido'}
-                                    </span>
-                                </div>
-                                <div class="hotel-precio-detalle">
-                                    $${hotel.costoPorNoche.toLocaleString()} × ${calcularNoches(hotel.fechaCheckIn, hotel.fechaCheckOut)} noches
-                                </div>
-                                <div class="hotel-actions">
+                                
+                                <div class="elemento-acciones">
                                     <button onclick="editHotel('${hotel.id}')" class="btn-small">✏️</button>
                                     <button onclick="deleteHotel('${hotel.id}')" class="btn-small btn-danger">🗑️</button>
                                 </div>
@@ -282,7 +290,7 @@
                         `).join('')}
                         
                         ${(viajeData.hoteles || []).length === 0 ? 
-                            '<div class="empty-state">No hay hoteles registrados</div>' : ''
+                            '<div class="empty-message">No hay hoteles registrados</div>' : ''
                         }
                     </div>
                 </div>
@@ -291,38 +299,41 @@
 
         function renderActividades() {
             return `
-                <div class="actividades-container">
+                <div class="section-container">
                     <div class="section-header">
-                        <h3>🎯 Actividades por Ciudad</h3>
+                        <h3>🎯 Gestión de Actividades</h3>
+                        <button onclick="addActividad()" class="btn-primary">➕ Nueva Actividad</button>
                     </div>
                     
-                    <div class="ciudades-actividades">
-                        ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(ciudad => `
-                            <div class="ciudad-actividades">
-                                <div class="ciudad-actividades-header">
-                                    <h4>${ciudad.nombre}, ${ciudad.pais}</h4>
-                                    <button onclick="addActividad('${ciudad.nombre}')" class="btn-small">➕ Actividad</button>
+                    <div class="elementos-grid">
+                        ${(viajeData.actividades || []).map(actividad => `
+                            <div class="elemento-card actividad-card">
+                                <div class="elemento-header">
+                                    <div class="actividad-info">
+                                        <h4>${actividad.nombre}</h4>
+                                        <span class="ciudad">${actividad.ciudad}</span>
+                                    </div>
+                                    ${actividad.costo ? `<div class="costo">$${actividad.costo.toLocaleString()}</div>` : ''}
                                 </div>
-                                <div class="actividades-grid">
-                                    ${(viajeData.actividades[ciudad.nombre] || []).map((actividad, index) => `
-                                        <div class="actividad-item">
-                                            <div class="actividad-content">
-                                                <span class="actividad-nombre">${actividad.nombre}</span>
-                                                ${actividad.costo ? `<span class="actividad-costo">$${actividad.costo.toLocaleString()}</span>` : ''}
-                                            </div>
-                                            <div class="actividad-acciones">
-                                                <button onclick="editActividad('${ciudad.nombre}', ${index})" class="btn-tiny">✏️</button>
-                                                <button onclick="deleteActividad('${ciudad.nombre}', ${index})" class="btn-tiny">🗑️</button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                    
-                                    ${(viajeData.actividades[ciudad.nombre] || []).length === 0 ? 
-                                        '<div class="no-actividades">No hay actividades planeadas</div>' : ''
-                                    }
+                                
+                                <div class="elemento-contenido">
+                                    ${actividad.descripcion ? `<p class="descripcion">${actividad.descripcion}</p>` : ''}
+                                    <div class="detalles">
+                                        <span>👥 Para 4 personas</span>
+                                        ${actividad.duracion ? `<span>⏱️ ${actividad.duracion}</span>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="elemento-acciones">
+                                    <button onclick="editActividad('${actividad.id}')" class="btn-small">✏️</button>
+                                    <button onclick="deleteActividad('${actividad.id}')" class="btn-small btn-danger">🗑️</button>
                                 </div>
                             </div>
                         `).join('')}
+                        
+                        ${(viajeData.actividades || []).length === 0 ? 
+                            '<div class="empty-message">No hay actividades registradas</div>' : ''
+                        }
                     </div>
                 </div>
             `;
@@ -338,65 +349,65 @@
             const costoActividades = calcularCostoActividades();
             
             return `
-                <div class="presupuesto-container">
+                <div class="section-container">
                     <div class="section-header">
-                        <h3>💰 Presupuesto del Viaje</h3>
-                        <button onclick="addIngreso()" class="btn-primary">➕ Agregar Ingreso</button>
+                        <h3>💰 Control de Presupuesto</h3>
+                        <button onclick="addIngreso()" class="btn-primary">➕ Agregar Dinero</button>
                     </div>
                     
-                    <div class="balance-cards">
-                        <div class="balance-card ${balance >= 0 ? 'positive' : 'negative'}">
+                    <div class="presupuesto-resumen">
+                        <div class="balance-card ${balance >= 0 ? 'positivo' : 'negativo'}">
                             <h4>💰 Balance</h4>
-                            <div class="balance-amount">${balance >= 0 ? '+' : ''}$${balance.toLocaleString()}</div>
-                            <p>${balance >= 0 ? 'Disponible' : 'Sobrepasado'}</p>
+                            <div class="monto">${balance >= 0 ? '+' : ''}$${balance.toLocaleString()}</div>
+                            <p>${balance >= 0 ? 'Dinero disponible' : 'Presupuesto excedido'}</p>
                         </div>
-                        <div class="balance-card ingresos">
-                            <h4>📈 Ingresos</h4>
-                            <div class="balance-amount">$${totalIngresos.toLocaleString()}</div>
-                            <p>Total disponible</p>
+                        
+                        <div class="resumen-card">
+                            <h4>📈 Dinero disponible</h4>
+                            <div class="monto positivo">$${totalIngresos.toLocaleString()}</div>
                         </div>
-                        <div class="balance-card egresos">
-                            <h4>📉 Egresos</h4>
-                            <div class="balance-amount">$${totalEgresos.toLocaleString()}</div>
-                            <p>Total planificado</p>
+                        
+                        <div class="resumen-card">
+                            <h4>📉 Total planificado</h4>
+                            <div class="monto negativo">$${totalEgresos.toLocaleString()}</div>
                         </div>
                     </div>
                     
                     <div class="presupuesto-detalles">
-                        <div class="ingresos-section">
-                            <h4>💰 Ingresos</h4>
-                            <div class="ingresos-list">
+                        <div class="ingresos-seccion">
+                            <h4>💰 Dinero Disponible</h4>
+                            <div class="lista-ingresos">
                                 ${(viajeData.presupuesto.ingresos || []).map(ingreso => `
                                     <div class="ingreso-item">
-                                        <span class="ingreso-descripcion">${ingreso.descripcion}</span>
-                                        <span class="ingreso-monto">$${ingreso.monto.toLocaleString()}</span>
+                                        <span class="descripcion">${ingreso.descripcion}</span>
+                                        <span class="monto">$${ingreso.monto.toLocaleString()}</span>
                                         <button onclick="deleteIngreso('${ingreso.id}')" class="btn-tiny">🗑️</button>
                                     </div>
                                 `).join('')}
                                 
                                 ${(viajeData.presupuesto.ingresos || []).length === 0 ? 
-                                    '<div class="empty-state">No hay ingresos registrados</div>' : ''
+                                    '<div class="empty-message">No hay ingresos registrados</div>' : ''
                                 }
                             </div>
                         </div>
                         
-                        <div class="egresos-section">
-                            <h4>📊 Desglose de Egresos</h4>
-                            <div class="egresos-breakdown">
-                                <div class="egreso-categoria">
-                                    <span class="categoria-icon">✈️</span>
-                                    <span class="categoria-nombre">Transportes</span>
-                                    <span class="categoria-monto">$${costoTransportes.toLocaleString()}</span>
+                        <div class="gastos-seccion">
+                            <h4>📊 Desglose de Gastos</h4>
+                            <div class="gastos-breakdown">
+                                <div class="gasto-categoria">
+                                    <span class="icono">✈️</span>
+                                    <span class="nombre">Transportes</span>
+                                    <span class="monto">$${costoTransportes.toLocaleString()}</span>
                                 </div>
-                                <div class="egreso-categoria">
-                                    <span class="categoria-icon">🏨</span>
-                                    <span class="categoria-nombre">Hoteles</span>
-                                    <span class="categoria-monto">$${costoHoteles.toLocaleString()}</span>
+                                <div class="gasto-categoria">
+                                    <span class="icono">🏨</span>
+                                    <span class="nombre">Hoteles</span>
+                                    <span class="monto">$${costoHoteles.toLocaleString()}</span>
                                 </div>
-                                <div class="egreso-categoria">
-                                    <span class="categoria-icon">🎯</span>
-                                    <span class="categoria-nombre">Actividades</span>
-                                    <span class="categoria-monto">$${costoActividades.toLocaleString()}</span>
+                                <div class="gasto-categoria">
+                                    <span class="icono">🎯</span>
+                                    <span class="nombre">Actividades</span>
+                                    <span class="monto">$${costoActividades.toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
@@ -407,54 +418,23 @@
 
         // Funciones auxiliares
         function calcularDiasViaje() {
-            if (!viajeData.viaje || !viajeData.viaje.fechaInicio || !viajeData.viaje.fechaFin) {
-                return 0;
-            }
-            const inicio = new Date(viajeData.viaje.fechaInicio);
-            const fin = new Date(viajeData.viaje.fechaFin);
+            const inicio = new Date(viajeData.fechaInicio || "2024-12-20");
+            const fin = new Date(viajeData.fechaFin || "2025-01-06");
+            return Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
+        }
+
+        function calcularDias(fechaInicio, fechaFin) {
+            const inicio = new Date(fechaInicio);
+            const fin = new Date(fechaFin);
             return Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
         }
 
-        function calcularDiasEnCiudad(llegada, salida) {
-            const fechaLlegada = new Date(llegada);
-            const fechaSalida = new Date(salida);
-            return Math.ceil((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24));
-        }
-
-        function calcularNoches(checkIn, checkOut) {
-            const entrada = new Date(checkIn);
-            const salida = new Date(checkOut);
-            return Math.ceil((salida - entrada) / (1000 * 60 * 60 * 24));
-        }
-
-        function getTransporteStatus(ciudad) {
-            const transportes = viajeData.transportes || [];
-            const tieneTransporte = transportes.some(t => t.destino === ciudad.nombre);
-            return {
-                class: tieneTransporte ? 'complete' : 'pending',
-                text: tieneTransporte ? 'Confirmado' : 'Pendiente'
-            };
-        }
-
-        function getHotelStatus(ciudad) {
-            const hoteles = viajeData.hoteles || [];
-            const hotelesEnCiudad = hoteles.filter(h => h.ciudad === ciudad.nombre);
-            
-            if (hotelesEnCiudad.length === 0) {
-                return { class: 'pending', text: 'Pendiente' };
-            }
-            
-            // Verificar si todas las noches están cubiertas
-            const diasEnCiudad = calcularDiasEnCiudad(ciudad.fechaLlegada, ciudad.fechaSalida);
-            const nochesCubiertas = hotelesEnCiudad.reduce((sum, hotel) => 
-                sum + calcularNoches(hotel.fechaCheckIn, hotel.fechaCheckOut), 0
-            );
-            
-            if (nochesCubiertas >= diasEnCiudad - 1) { // -1 porque el último día no duermes
-                return { class: 'complete', text: 'Completo' };
-            } else {
-                return { class: 'partial', text: 'Parcial' };
-            }
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { 
+                day: '2-digit', 
+                month: 'short'
+            });
         }
 
         function getTransporteIcon(tipo) {
@@ -467,8 +447,23 @@
             return icons[tipo] || '🚗';
         }
 
+        function getHotelNombre(hotelId) {
+            const hotel = (viajeData.hoteles || []).find(h => h.id === hotelId);
+            return hotel ? hotel.nombre : 'Hotel no encontrado';
+        }
+
+        function getTransporteDescripcion(transporteId) {
+            const transporte = (viajeData.transportes || []).find(t => t.id === transporteId);
+            return transporte ? `${transporte.tipo} ${transporte.origen}→${transporte.destino}` : 'Transporte no encontrado';
+        }
+
+        function getActividadNombre(actividadId) {
+            const actividad = (viajeData.actividades || []).find(a => a.id === actividadId);
+            return actividad ? actividad.nombre : 'Actividad no encontrada';
+        }
+
         function calcularTotalIngresos() {
-            return (viajeData.presupuesto.ingresos || []).reduce((sum, ingreso) => sum + ingreso.monto, 0);
+            return (viajeData.presupuesto?.ingresos || []).reduce((sum, ingreso) => sum + ingreso.monto, 0);
         }
 
         function calcularCostoTotal() {
@@ -476,26 +471,15 @@
         }
 
         function calcularCostoTransportes() {
-            return (viajeData.transportes || []).reduce((sum, transporte) => sum + transporte.costo, 0);
+            return (viajeData.transportes || []).reduce((sum, transporte) => sum + (transporte.costo || 0), 0);
         }
 
         function calcularCostoHoteles() {
-            return (viajeData.hoteles || []).reduce((sum, hotel) => sum + hotel.costoTotal, 0);
+            return (viajeData.hoteles || []).reduce((sum, hotel) => sum + (hotel.costoTotal || 0), 0);
         }
 
         function calcularCostoActividades() {
-            let total = 0;
-            Object.values(viajeData.actividades || {}).forEach(actividades => {
-                actividades.forEach(actividad => {
-                    if (actividad.costo) total += actividad.costo;
-                });
-            });
-            return total;
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+            return (viajeData.actividades || []).reduce((sum, actividad) => sum + (actividad.costo || 0), 0);
         }
 
         // Funciones globales
@@ -507,231 +491,95 @@
             event.target.classList.add('active');
         };
 
-        window.addIngreso = function() {
-            openIngresoModal();
+        window.addPeriodo = function() {
+            openPeriodoModal();
         };
 
-        function openIngresoModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>💰 Agregar Ingreso</h3>
-                    <form id="ingresoForm">
-                        <div class="form-group">
-                            <label>Descripción:</label>
-                            <input type="text" id="ingresoDescripcion" placeholder="Ej: Presupuesto familiar" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Monto disponible:</label>
-                            <input type="number" id="ingresoMonto" placeholder="0" required>
-                        </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="btn-primary">💾 Guardar</button>
-                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            document.getElementById('ingresoForm').onsubmit = function(e) {
-                e.preventDefault();
-                
-                const ingreso = {
-                    id: Date.now().toString(),
-                    descripcion: document.getElementById('ingresoDescripcion').value,
-                    monto: parseInt(document.getElementById('ingresoMonto').value)
-                };
-                
-                if (!viajeData.presupuesto.ingresos) {
-                    viajeData.presupuesto.ingresos = [];
-                }
-                
-                viajeData.presupuesto.ingresos.push(ingreso);
-                saveData('viajeData', viajeData);
-                closeModal();
-                renderApp();
-            };
-        }
-
-        window.addTransporte = function() {
-            openTransporteModal();
-        };
-
-        function openTransporteModal(transporteId = null) {
-            const transporte = transporteId ? 
-                viajeData.transportes.find(t => t.id === transporteId) : null;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>${transporte ? '✏️ Editar' : '➕ Nuevo'} Transporte</h3>
-                    <form id="transporteForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Tipo de transporte:</label>
-                                <select id="transporteTipo" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Avión" ${transporte?.tipo === 'Avión' ? 'selected' : ''}>✈️ Avión</option>
-                                    <option value="Tren" ${transporte?.tipo === 'Tren' ? 'selected' : ''}>🚂 Tren</option>
-                                    <option value="Autobús" ${transporte?.tipo === 'Autobús' ? 'selected' : ''}>🚌 Autobús</option>
-                                    <option value="Auto" ${transporte?.tipo === 'Auto' ? 'selected' : ''}>🚗 Auto</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Fecha:</label>
-                                <input type="date" id="transporteFecha" value="${transporte?.fecha || ''}" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Origen:</label>
-                                <select id="transporteOrigen" required>
-                                    <option value="">Seleccionar...</option>
-                                    ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(c => 
-                                        `<option value="${c.nombre}" ${transporte?.origen === c.nombre ? 'selected' : ''}>${c.nombre}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Destino:</label>
-                                <select id="transporteDestino" required>
-                                    <option value="">Seleccionar...</option>
-                                    ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(c => 
-                                        `<option value="${c.nombre}" ${transporte?.destino === c.nombre ? 'selected' : ''}>${c.nombre}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Hora (opcional):</label>
-                                <input type="time" id="transporteHora" value="${transporte?.hora || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Costo (4 personas):</label>
-                                <input type="number" id="transporteCosto" value="${transporte?.costo || ''}" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Notas (opcional):</label>
-                            <input type="text" id="transporteNotas" value="${transporte?.notas || ''}" placeholder="Ej: Vuelo directo, asientos reservados">
-                        </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="btn-primary">💾 Guardar</button>
-                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            document.getElementById('transporteForm').onsubmit = function(e) {
-                e.preventDefault();
-                
-                const nuevoTransporte = {
-                    id: transporte?.id || Date.now().toString(),
-                    tipo: document.getElementById('transporteTipo').value,
-                    fecha: document.getElementById('transporteFecha').value,
-                    origen: document.getElementById('transporteOrigen').value,
-                    destino: document.getElementById('transporteDestino').value,
-                    hora: document.getElementById('transporteHora').value,
-                    costo: parseInt(document.getElementById('transporteCosto').value),
-                    notas: document.getElementById('transporteNotas').value
-                };
-                
-                if (!viajeData.transportes) viajeData.transportes = [];
-                
-                if (transporte) {
-                    const index = viajeData.transportes.findIndex(t => t.id === transporteId);
-                    viajeData.transportes[index] = nuevoTransporte;
-                } else {
-                    viajeData.transportes.push(nuevoTransporte);
-                }
-                
-                saveData('viajeData', viajeData);
-                closeModal();
-                renderApp();
-            };
-        }
-
-        window.addHotel = function() {
-            openHotelModal();
-        };
-
-        function openHotelModal(hotelId = null) {
-            const hotel = hotelId ? 
-                viajeData.hoteles.find(h => h.id === hotelId) : null;
+        function openPeriodoModal(periodoIndex = null) {
+            const periodo = periodoIndex !== null ? viajeData.periodos[periodoIndex] : null;
             
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
                 <div class="modal-content large">
-                    <h3>${hotel ? '✏️ Editar' : '➕ Nueva'} Reservación</h3>
-                    <form id="hotelForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Nombre del hotel:</label>
-                                <input type="text" id="hotelNombre" value="${hotel?.nombre || ''}" placeholder="Ej: Hotel Central Zurich" required>
+                    <h3>${periodo ? '✏️ Editar' : '➕ Nuevo'} Período del Viaje</h3>
+                    <form id="periodoForm">
+                        <div class="form-section">
+                            <h4>📅 Fechas</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Fecha inicio:</label>
+                                    <input type="date" id="periodoFechaInicio" value="${periodo?.fechaInicio || ''}" min="2024-12-20" max="2025-01-06" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha fin:</label>
+                                    <input type="date" id="periodoFechaFin" value="${periodo?.fechaFin || ''}" min="2024-12-20" max="2025-01-06" required>
+                                </div>
                             </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>🏙️ Destino</h4>
                             <div class="form-group">
-                                <label>Ciudad:</label>
-                                <select id="hotelCiudad" required onchange="updateFechasDisponibles()">
-                                    <option value="">Seleccionar...</option>
-                                    ${(viajeData.viaje && viajeData.viaje.ciudades || []).map(c => 
-                                        `<option value="${c.nombre}" ${hotel?.ciudad === c.nombre ? 'selected' : ''}>${c.nombre}</option>`
+                                <label>Ciudad/Destino:</label>
+                                <input type="text" id="periodoDestino" value="${periodo?.destino || ''}" placeholder="Ej: Zurich, St Moritz, Milan...">
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>🏨 Hospedaje (Opcional)</h4>
+                            <div class="form-group">
+                                <label>Hotel:</label>
+                                <select id="periodoHotel">
+                                    <option value="">Seleccionar hotel...</option>
+                                    ${(viajeData.hoteles || []).map(hotel => 
+                                        `<option value="${hotel.id}" ${periodo?.hotelId === hotel.id ? 'selected' : ''}>${hotel.nombre} - ${hotel.ciudad}</option>`
                                     ).join('')}
                                 </select>
                             </div>
                         </div>
-                        <div class="form-row">
+                        
+                        <div class="form-section">
+                            <h4>✈️ Transporte (Opcional)</h4>
                             <div class="form-group">
-                                <label>Check-in:</label>
-                                <input type="date" id="hotelCheckIn" value="${hotel?.fechaCheckIn || ''}" required onchange="calcularCostoTotal()">
-                            </div>
-                            <div class="form-group">
-                                <label>Check-out:</label>
-                                <input type="date" id="hotelCheckOut" value="${hotel?.fechaCheckOut || ''}" required onchange="calcularCostoTotal()">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Tipo de habitación:</label>
-                                <select id="hotelTipoHabitacion" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Individual" ${hotel?.tipoHabitacion === 'Individual' ? 'selected' : ''}>Individual</option>
-                                    <option value="Doble" ${hotel?.tipoHabitacion === 'Doble' ? 'selected' : ''}>Doble</option>
-                                    <option value="Triple" ${hotel?.tipoHabitacion === 'Triple' ? 'selected' : ''}>Triple</option>
-                                    <option value="Familiar" ${hotel?.tipoHabitacion === 'Familiar' ? 'selected' : ''}>Familiar</option>
-                                    <option value="Suite" ${hotel?.tipoHabitacion === 'Suite' ? 'selected' : ''}>Suite</option>
+                                <label>Transporte:</label>
+                                <select id="periodoTransporte">
+                                    <option value="">Seleccionar transporte...</option>
+                                    ${(viajeData.transportes || []).map(transporte => 
+                                        `<option value="${transporte.id}" ${periodo?.transporteId === transporte.id ? 'selected' : ''}>${transporte.tipo} ${transporte.origen}→${transporte.destino}</option>`
+                                    ).join('')}
                                 </select>
                             </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>🎯 Actividades (Opcional)</h4>
                             <div class="form-group">
-                                <label>Cantidad de habitaciones:</label>
-                                <input type="number" id="hotelCantidadHabitaciones" value="${hotel?.cantidadHabitaciones || 1}" min="1" required>
+                                <label>Actividades a realizar:</label>
+                                <div class="actividades-selector">
+                                    ${(viajeData.actividades || []).map(actividad => `
+                                        <label class="checkbox-item">
+                                            <input type="checkbox" value="${actividad.id}" 
+                                                ${periodo?.actividadesIds?.includes(actividad.id) ? 'checked' : ''}>
+                                            <span>${actividad.nombre} (${actividad.ciudad})</span>
+                                        </label>
+                                    `).join('')}
+                                    
+                                    ${(viajeData.actividades || []).length === 0 ? 
+                                        '<p class="no-options">No hay actividades registradas</p>' : ''
+                                    }
+                                </div>
                             </div>
                         </div>
-                        <div class="form-row">
+                        
+                        <div class="form-section">
+                            <h4>📝 Notas (Opcional)</h4>
                             <div class="form-group">
-                                <label>Desayuno incluido:</label>
-                                <select id="hotelDesayuno" required>
-                                    <option value="true" ${hotel?.desayunoIncluido === true ? 'selected' : ''}>✅ Sí incluido</option>
-                                    <option value="false" ${hotel?.desayunoIncluido === false ? 'selected' : ''}>❌ No incluido</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Costo por noche:</label>
-                                <input type="number" id="hotelCostoPorNoche" value="${hotel?.costoPorNoche || ''}" required onchange="calcularCostoTotal()">
+                                <label>Notas adicionales:</label>
+                                <textarea id="periodoNotas" rows="3" placeholder="Cualquier información adicional...">${periodo?.notas || ''}</textarea>
                             </div>
                         </div>
-                        <div class="costo-preview">
-                            <strong>Costo total: $<span id="costoTotalPreview">0</span></strong>
-                            (<span id="nochesPreview">0</span> noches)
-                        </div>
+                        
                         <div class="form-buttons">
                             <button type="submit" class="btn-primary">💾 Guardar</button>
                             <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
@@ -742,62 +590,30 @@
             
             document.body.appendChild(modal);
             
-            // Función para calcular costo total en tiempo real
-            window.calcularCostoTotal = function() {
-                const checkIn = document.getElementById('hotelCheckIn').value;
-                const checkOut = document.getElementById('hotelCheckOut').value;
-                const costoPorNoche = parseInt(document.getElementById('hotelCostoPorNoche').value) || 0;
-                
-                if (checkIn && checkOut && costoPorNoche) {
-                    const noches = calcularNoches(checkIn, checkOut);
-                    const costoTotal = noches * costoPorNoche;
-                    
-                    document.getElementById('nochesPreview').textContent = noches;
-                    document.getElementById('costoTotalPreview').textContent = costoTotal.toLocaleString();
-                }
-            };
-            
-            // Calcular costo si estamos editando
-            if (hotel) {
-                setTimeout(calcularCostoTotal, 100);
-            }
-            
-            document.getElementById('hotelForm').onsubmit = function(e) {
+            document.getElementById('periodoForm').onsubmit = function(e) {
                 e.preventDefault();
                 
-                const checkIn = document.getElementById('hotelCheckIn').value;
-                const checkOut = document.getElementById('hotelCheckOut').value;
-                const ciudad = document.getElementById('hotelCiudad').value;
+                // Recoger actividades seleccionadas
+                const actividadesSeleccionadas = Array.from(
+                    document.querySelectorAll('.actividades-selector input[type="checkbox"]:checked')
+                ).map(checkbox => checkbox.value);
                 
-                // Validar fechas disponibles
-                if (!hotel && !validarFechasDisponibles(ciudad, checkIn, checkOut)) {
-                    alert('Las fechas seleccionadas se solapan con otra reservación en esta ciudad.');
-                    return;
-                }
-                
-                const costoPorNoche = parseInt(document.getElementById('hotelCostoPorNoche').value);
-                const noches = calcularNoches(checkIn, checkOut);
-                
-                const nuevoHotel = {
-                    id: hotel?.id || Date.now().toString(),
-                    nombre: document.getElementById('hotelNombre').value,
-                    ciudad: ciudad,
-                    fechaCheckIn: checkIn,
-                    fechaCheckOut: checkOut,
-                    tipoHabitacion: document.getElementById('hotelTipoHabitacion').value,
-                    cantidadHabitaciones: parseInt(document.getElementById('hotelCantidadHabitaciones').value),
-                    desayunoIncluido: document.getElementById('hotelDesayuno').value === 'true',
-                    costoPorNoche: costoPorNoche,
-                    costoTotal: noches * costoPorNoche
+                const nuevoPeriodo = {
+                    fechaInicio: document.getElementById('periodoFechaInicio').value,
+                    fechaFin: document.getElementById('periodoFechaFin').value,
+                    destino: document.getElementById('periodoDestino').value,
+                    hotelId: document.getElementById('periodoHotel').value || null,
+                    transporteId: document.getElementById('periodoTransporte').value || null,
+                    actividadesIds: actividadesSeleccionadas,
+                    notas: document.getElementById('periodoNotas').value
                 };
                 
-                if (!viajeData.hoteles) viajeData.hoteles = [];
+                if (!viajeData.periodos) viajeData.periodos = [];
                 
-                if (hotel) {
-                    const index = viajeData.hoteles.findIndex(h => h.id === hotelId);
-                    viajeData.hoteles[index] = nuevoHotel;
+                if (periodo) {
+                    viajeData.periodos[periodoIndex] = nuevoPeriodo;
                 } else {
-                    viajeData.hoteles.push(nuevoHotel);
+                    viajeData.periodos.push(nuevoPeriodo);
                 }
                 
                 saveData('viajeData', viajeData);
@@ -806,115 +622,51 @@
             };
         }
 
-        function validarFechasDisponibles(ciudad, checkIn, checkOut) {
-            const hotelesEnCiudad = (viajeData.hoteles || []).filter(h => h.ciudad === ciudad);
-            
-            for (let hotel of hotelesEnCiudad) {
-                const existeCheckIn = new Date(hotel.fechaCheckIn);
-                const existeCheckOut = new Date(hotel.fechaCheckOut);
-                const nuevoCheckIn = new Date(checkIn);
-                const nuevoCheckOut = new Date(checkOut);
-                
-                // Verificar si hay solapamiento
-                if ((nuevoCheckIn < existeCheckOut && nuevoCheckOut > existeCheckIn)) {
-                    return false;
-                }
-            }
-            
-            return true;
-        }
-
-        window.addActividad = function(ciudad) {
-            openActividadModal(ciudad);
+        window.editPeriodo = function(index) {
+            openPeriodoModal(index);
         };
 
-        function openActividadModal(ciudad, actividadIndex = null) {
-            const actividad = actividadIndex !== null ? 
-                viajeData.actividades[ciudad][actividadIndex] : null;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>${actividad ? '✏️ Editar' : '➕ Nueva'} Actividad - ${ciudad}</h3>
-                    <form id="actividadForm">
-                        <div class="form-group">
-                            <label>Nombre de la actividad:</label>
-                            <input type="text" id="actividadNombre" value="${actividad?.nombre || ''}" placeholder="Ej: Visita al Duomo" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Costo (opcional, para 4 personas):</label>
-                            <input type="number" id="actividadCosto" value="${actividad?.costo || ''}" placeholder="0">
-                        </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="btn-primary">💾 Guardar</button>
-                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            document.getElementById('actividadForm').onsubmit = function(e) {
-                e.preventDefault();
-                
-                const nuevaActividad = {
-                    nombre: document.getElementById('actividadNombre').value,
-                    costo: parseInt(document.getElementById('actividadCosto').value) || 0
-                };
-                
-                if (!viajeData.actividades[ciudad]) {
-                    viajeData.actividades[ciudad] = [];
-                }
-                
-                if (actividad) {
-                    viajeData.actividades[ciudad][actividadIndex] = nuevaActividad;
-                } else {
-                    viajeData.actividades[ciudad].push(nuevaActividad);
-                }
-                
+        window.deletePeriodo = function(index) {
+            if (confirm('¿Eliminar este período?')) {
+                viajeData.periodos.splice(index, 1);
                 saveData('viajeData', viajeData);
-                closeModal();
                 renderApp();
+            }
+        };
+
+        // Función placeholder para otras funciones
+        window.addTransporte = function() {
+            alert('Función en desarrollo - Agregar desde el modal del período');
+        };
+
+        window.addHotel = function() {
+            alert('Función en desarrollo - Agregar desde el modal del período');
+        };
+
+        window.addActividad = function() {
+            alert('Función en desarrollo - Agregar desde el modal del período');
+        };
+
+        window.addIngreso = function() {
+            const descripcion = prompt('Descripción del dinero disponible:');
+            if (!descripcion) return;
+            
+            const monto = prompt('Cantidad:');
+            if (!monto || isNaN(monto)) return;
+            
+            const ingreso = {
+                id: Date.now().toString(),
+                descripcion: descripcion,
+                monto: parseInt(monto)
             };
-        }
-
-        // Funciones de edición y eliminación
-        window.editTransporte = function(id) {
-            openTransporteModal(id);
-        };
-
-        window.deleteTransporte = function(id) {
-            if (confirm('¿Eliminar este transporte?')) {
-                viajeData.transportes = viajeData.transportes.filter(t => t.id !== id);
-                saveData('viajeData', viajeData);
-                renderApp();
+            
+            if (!viajeData.presupuesto.ingresos) {
+                viajeData.presupuesto.ingresos = [];
             }
-        };
-
-        window.editHotel = function(id) {
-            openHotelModal(id);
-        };
-
-        window.deleteHotel = function(id) {
-            if (confirm('¿Eliminar esta reservación?')) {
-                viajeData.hoteles = viajeData.hoteles.filter(h => h.id !== id);
-                saveData('viajeData', viajeData);
-                renderApp();
-            }
-        };
-
-        window.editActividad = function(ciudad, index) {
-            openActividadModal(ciudad, index);
-        };
-
-        window.deleteActividad = function(ciudad, index) {
-            if (confirm('¿Eliminar esta actividad?')) {
-                viajeData.actividades[ciudad].splice(index, 1);
-                saveData('viajeData', viajeData);
-                renderApp();
-            }
+            
+            viajeData.presupuesto.ingresos.push(ingreso);
+            saveData('viajeData', viajeData);
+            renderApp();
         };
 
         window.deleteIngreso = function(id) {
@@ -929,29 +681,6 @@
             const modal = document.querySelector('.modal');
             if (modal) modal.remove();
         };
-
-        // Placeholder para otras funciones
-        window.addCiudad = function() {
-            alert('Función en desarrollo');
-        };
-
-        window.editCiudad = function(index) {
-            alert('Función en desarrollo');
-        };
-
-        window.deleteCiudad = function(index) {
-            alert('Función en desarrollo');
-        };
-
-        window.exportItinerario = function() {
-            const data = JSON.stringify(viajeData, null, 2);
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'viaje-europa-2025.json';
-            a.click();
-        };
     </script>
     
     <style>
@@ -963,46 +692,43 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            background: #f5f7fa;
+            color: #1a202c;
             line-height: 1.6;
         }
         
         .header {
-            background: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 24px 30px;
-            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
         }
         
         .header h1 {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 12px;
-            color: #0f172a;
         }
         
-        .stats {
+        .info-viaje {
             display: flex;
-            gap: 20px;
+            justify-content: center;
+            gap: 24px;
             flex-wrap: wrap;
-        }
-        
-        .stat {
-            padding: 8px 16px;
-            background: #f1f5f9;
-            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            opacity: 0.95;
         }
         
-        .connected {
-            background: #dcfce7;
-            color: #166534;
+        .fecha-viaje {
+            font-weight: 600;
         }
         
-        .offline {
-            background: #fef2f2;
-            color: #dc2626;
+        .status.online {
+            color: #48bb78;
+        }
+        
+        .status.offline {
+            color: #f56565;
         }
         
         .tabs {
@@ -1020,7 +746,7 @@
             font-size: 14px;
             font-weight: 500;
             color: #64748b;
-            border-bottom: 2px solid transparent;
+            border-bottom: 3px solid transparent;
             transition: all 0.2s;
             white-space: nowrap;
         }
@@ -1038,16 +764,16 @@
         
         .tab-content {
             display: none;
+            min-height: calc(100vh - 200px);
         }
         
         .tab-content.active {
             display: block;
         }
         
-        /* Itinerario */
+        /* Estilos del itinerario */
         .itinerario-container {
             padding: 30px;
-            background: white;
         }
         
         .itinerario-header {
@@ -1056,500 +782,341 @@
             align-items: center;
             margin-bottom: 30px;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 16px;
         }
         
         .itinerario-header h3 {
-            font-size: 20px;
-            color: #0f172a;
+            font-size: 24px;
+            color: #1a202c;
         }
         
-        .date-range {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .date-range label {
-            font-weight: 500;
-            color: #374151;
-        }
-        
-        .date-range input {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        
-        .timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .timeline-item {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        
-        .timeline-marker {
-            width: 40px;
-            height: 40px;
-            background: #3b82f6;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
         }
         
-        .timeline-content {
-            flex: 1;
-            background: #f8fafc;
-            padding: 20px;
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        
+        .estado-vacio {
+            text-align: center;
+            padding: 60px 30px;
+            background: white;
             border-radius: 12px;
-            border-left: 4px solid #3b82f6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        .city-header {
+        .icono-vacio {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .estado-vacio h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+        
+        .estado-vacio p {
+            color: #718096;
+            margin-bottom: 24px;
+        }
+        
+        .periodos-lista {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .periodo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .periodo-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+            align-items: flex-start;
+            margin-bottom: 20px;
         }
         
-        .city-header h4 {
+        .periodo-fechas h4 {
             font-size: 18px;
-            color: #0f172a;
+            color: #1a202c;
+            margin-bottom: 4px;
         }
         
-        .duration {
-            background: #e0e7ff;
-            color: #3730a3;
+        .duracion {
+            background: #edf2f7;
+            color: #4a5568;
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
         }
         
-        .city-dates {
-            margin-bottom: 16px;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        .city-status {
-            display: grid;
+        .periodo-acciones {
+            display: flex;
             gap: 8px;
+        }
+        
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .periodo-detalles {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .detalle-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .label {
+            font-weight: 600;
+            color: #4a5568;
+            min-width: 120px;
+        }
+        
+        .value {
+            color: #1a202c;
+            flex: 1;
+        }
+        
+        /* Secciones generales */
+        .section-container {
+            padding: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .section-header h3 {
+            font-size: 24px;
+            color: #1a202c;
+        }
+        
+        .elementos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .elemento-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .elemento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .elemento-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 16px;
         }
         
-        .status-item {
+        .tipo-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .tipo-badge.avión {
+            background: #3b82f6;
+        }
+        
+        .tipo-badge.tren {
+            background: #10b981;
+        }
+        
+        .tipo-badge.autobús {
+            background: #f59e0b;
+        }
+        
+        .tipo-badge.auto {
+            background: #8b5cf6;
+        }
+        
+        .costo {
+            font-size: 18px;
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        .elemento-contenido h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+        
+        .detalles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #718096;
+        }
+        
+        .notas, .descripcion {
+            background: #f7fafc;
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 13px;
-            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 12px;
         }
         
-        .status-item.complete {
-            background: #dcfce7;
-            color: #166534;
-        }
-        
-        .status-item.partial {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .status-item.pending {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .city-actions {
+        .elemento-acciones {
             display: flex;
             gap: 8px;
+            margin-top: 16px;
         }
         
         .btn-small {
             padding: 6px 12px;
             border: none;
             border-radius: 4px;
-            font-size: 12px;
             cursor: pointer;
+            font-size: 12px;
             font-weight: 500;
         }
         
         .btn-small:not(.btn-danger) {
-            background: #3b82f6;
-            color: white;
+            background: #e2e8f0;
+            color: #4a5568;
         }
         
-        .btn-danger {
-            background: #ef4444;
-            color: white;
+        .btn-small.btn-danger {
+            background: #fed7d7;
+            color: #c53030;
         }
         
-        /* Secciones generales */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 30px 30px 0;
-            background: white;
-        }
-        
-        .section-header h3 {
-            font-size: 20px;
-            color: #0f172a;
-        }
-        
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-        
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-        
-        .btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .actions-bar {
-            background: white;
-            padding: 0 30px 30px;
-            display: flex;
-            gap: 12px;
-        }
-        
-        /* Transportes */
-        .transportes-container {
-            background: white;
-        }
-        
-        .transportes-list {
-            padding: 30px;
-            display: grid;
-            gap: 16px;
-        }
-        
-        .transporte-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            transition: shadow 0.2s;
-        }
-        
-        .transporte-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .transporte-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        
-        .transporte-tipo {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
-        }
-        
-        .transporte-tipo.avión {
-            background: #3b82f6;
-        }
-        
-        .transporte-tipo.tren {
-            background: #10b981;
-        }
-        
-        .transporte-tipo.autobús {
-            background: #f59e0b;
-        }
-        
-        .transporte-tipo.auto {
-            background: #8b5cf6;
-        }
-        
-        .transporte-costo {
-            font-size: 18px;
-            font-weight: 700;
-            color: #059669;
-        }
-        
-        .transporte-ruta {
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #0f172a;
-        }
-        
-        .transporte-detalles {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-            font-size: 13px;
-            color: #6b7280;
-        }
-        
-        .transporte-notas {
-            background: #f8fafc;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #6b7280;
-            margin-bottom: 12px;
-        }
-        
-        .transporte-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        /* Hoteles */
-        .hoteles-container {
-            background: white;
-        }
-        
-        .hoteles-list {
-            padding: 30px;
-            display: grid;
-            gap: 16px;
-        }
-        
-        .hotel-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            transition: shadow 0.2s;
-        }
-        
-        .hotel-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .hotel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-        
-        .hotel-nombre h4 {
-            font-size: 16px;
-            color: #0f172a;
-            margin-bottom: 4px;
-        }
-        
-        .hotel-ciudad {
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        .hotel-costo {
-            font-size: 18px;
-            font-weight: 700;
-            color: #059669;
-        }
-        
-        .hotel-fechas {
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: #374151;
-        }
-        
-        .noches {
-            color: #6b7280;
-            font-size: 13px;
-        }
-        
-        .hotel-detalles {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: #6b7280;
-        }
-        
-        .desayuno.incluido {
-            color: #059669;
-        }
-        
-        .desayuno.no-incluido {
-            color: #dc2626;
-        }
-        
-        .hotel-precio-detalle {
-            font-size: 12px;
-            color: #9ca3af;
-            margin-bottom: 12px;
-        }
-        
-        .hotel-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        /* Actividades */
-        .actividades-container {
-            padding: 30px;
-            background: white;
-        }
-        
-        .ciudades-actividades {
-            display: grid;
-            gap: 24px;
-        }
-        
-        .ciudad-actividades {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-        }
-        
-        .ciudad-actividades-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        
-        .ciudad-actividades-header h4 {
-            font-size: 16px;
-            color: #0f172a;
-        }
-        
-        .actividades-grid {
-            display: grid;
-            gap: 8px;
-        }
-        
-        .actividad-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 6px;
-        }
-        
-        .actividad-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex: 1;
-        }
-        
-        .actividad-nombre {
-            color: #0f172a;
-        }
-        
-        .actividad-costo {
-            color: #059669;
-            font-weight: 600;
-            font-size: 13px;
-        }
-        
-        .actividad-acciones {
-            display: flex;
-            gap: 4px;
-            margin-left: 12px;
-        }
-        
-        .btn-tiny {
-            padding: 4px 8px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-        }
-        
-        .no-actividades {
+        .empty-message {
+            grid-column: 1 / -1;
             text-align: center;
-            padding: 20px;
-            color: #6b7280;
+            padding: 40px;
+            color: #718096;
             font-style: italic;
         }
         
-        /* Presupuesto */
-        .presupuesto-container {
-            padding: 30px;
-            background: white;
+        /* Hoteles específicos */
+        .hotel-nombre h4 {
+            margin-bottom: 4px;
         }
         
-        .balance-cards {
+        .ciudad {
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .desayuno.incluido {
+            color: #38a169;
+        }
+        
+        .desayuno.no-incluido {
+            color: #e53e3e;
+        }
+        
+        .precio-detalle {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        /* Actividades específicas */
+        .actividad-info h4 {
+            margin-bottom: 4px;
+        }
+        
+        /* Presupuesto */
+        .presupuesto-resumen {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr;
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
         
-        .balance-card {
+        .balance-card, .resumen-card {
+            background: white;
             padding: 24px;
             border-radius: 12px;
             text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        .balance-card.positive {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        .balance-card.positivo {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
         }
         
-        .balance-card.negative {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        .balance-card.negativo {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
             color: white;
         }
         
-        .balance-card.ingresos {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-        }
-        
-        .balance-card.egresos {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-        }
-        
-        .balance-card h4 {
+        .balance-card h4, .resumen-card h4 {
             margin-bottom: 8px;
             font-size: 14px;
             opacity: 0.9;
         }
         
-        .balance-amount {
+        .monto {
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 4px;
         }
         
-        .balance-card p {
+        .monto.positivo {
+            color: #38a169;
+        }
+        
+        .monto.negativo {
+            color: #e53e3e;
+        }
+        
+        .balance-card p, .resumen-card p {
             font-size: 12px;
             opacity: 0.8;
         }
@@ -1560,69 +1127,85 @@
             gap: 30px;
         }
         
-        .ingresos-section h4, .egresos-section h4 {
-            margin-bottom: 16px;
-            color: #0f172a;
-            font-size: 16px;
+        .ingresos-seccion h4, .gastos-seccion h4 {
+            margin-bottom: 20px;
+            color: #1a202c;
+            font-size: 18px;
         }
         
-        .ingresos-list {
-            display: grid;
-            gap: 8px;
+        .lista-ingresos {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         .ingreso-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            background: #f0fdf4;
-            border-radius: 6px;
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .ingreso-descripcion {
-            color: #0f172a;
+        .ingreso-item:last-child {
+            border-bottom: none;
         }
         
-        .ingreso-monto {
-            color: #059669;
-            font-weight: 600;
+        .descripcion {
+            font-weight: 500;
+            color: #1a202c;
         }
         
-        .egresos-breakdown {
-            display: grid;
-            gap: 8px;
+        .ingreso-item .monto {
+            color: #38a169;
+            font-size: 16px;
         }
         
-        .egreso-categoria {
+        .btn-tiny {
+            padding: 4px 8px;
+            border: none;
+            background: #fed7d7;
+            color: #c53030;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 12px;
+        }
+        
+        .gastos-breakdown {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .gasto-categoria {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            background: #fef2f2;
-            border-radius: 6px;
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .categoria-icon {
-            margin-right: 8px;
+        .gasto-categoria:last-child {
+            border-bottom: none;
         }
         
-        .categoria-nombre {
+        .gasto-categoria .icono {
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .gasto-categoria .nombre {
             flex: 1;
-            color: #0f172a;
+            font-weight: 500;
+            color: #1a202c;
         }
         
-        .categoria-monto {
-            color: #dc2626;
+        .gasto-categoria .monto {
+            color: #e53e3e;
             font-weight: 600;
-        }
-        
-        /* Estados vacíos */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #6b7280;
-            font-style: italic;
+            font-size: 16px;
         }
         
         /* Modal */
@@ -1637,16 +1220,17 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            padding: 20px;
         }
         
         .modal-content {
             background: white;
-            padding: 24px;
             border-radius: 12px;
-            width: 90%;
+            width: 100%;
             max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
+            padding: 24px;
         }
         
         .modal-content.large {
@@ -1654,8 +1238,24 @@
         }
         
         .modal-content h3 {
-            margin-bottom: 20px;
-            color: #0f172a;
+            margin-bottom: 24px;
+            color: #1a202c;
+            font-size: 20px;
+        }
+        
+        .form-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        
+        .form-section h4 {
+            margin-bottom: 16px;
+            color: #1a202c;
+            font-size: 16px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
         }
         
         .form-group {
@@ -1672,7 +1272,7 @@
             display: block;
             margin-bottom: 6px;
             font-weight: 500;
-            color: #374151;
+            color: #4a5568;
         }
         
         .form-group input, .form-group select, .form-group textarea {
@@ -1686,22 +1286,35 @@
         
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .costo-preview {
-            background: #f0fdf4;
-            padding: 12px;
+        .actividades-selector {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
             border-radius: 6px;
+            padding: 12px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+        
+        .checkbox-item input {
+            margin-right: 8px;
+            width: auto;
+        }
+        
+        .no-options {
+            color: #718096;
+            font-style: italic;
             text-align: center;
-            margin-bottom: 16px;
-            color: #059669;
+            padding: 20px;
         }
         
         .form-buttons {
@@ -1709,66 +1322,50 @@
             gap: 12px;
             justify-content: flex-end;
             margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #d1d5db;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
         }
         
         /* Responsive */
         @media (max-width: 768px) {
             .header {
-                padding: 16px 20px;
+                padding: 20px;
             }
             
             .header h1 {
                 font-size: 24px;
             }
             
-            .stats {
-                gap: 12px;
-            }
-            
-            .tab-btn {
-                padding: 12px 16px;
+            .info-viaje {
+                gap: 16px;
                 font-size: 13px;
             }
             
-            .itinerario-container, .transportes-container, .hoteles-container, .actividades-container, .presupuesto-container {
+            .itinerario-container, .section-container {
                 padding: 20px;
             }
             
-            .section-header {
-                padding: 20px 20px 0;
+            .itinerario-header, .section-header {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
+                align-items: stretch;
             }
             
-            .itinerario-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
+            .elementos-grid {
+                grid-template-columns: 1fr;
             }
             
-            .date-range {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .timeline-item {
-                gap: 12px;
-            }
-            
-            .timeline-marker {
-                width: 30px;
-                height: 30px;
-                font-size: 12px;
-            }
-            
-            .city-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            
-            .balance-cards {
+            .presupuesto-resumen {
                 grid-template-columns: 1fr;
             }
             
@@ -1780,49 +1377,27 @@
                 grid-template-columns: 1fr;
             }
             
-            .modal-content {
-                margin: 20px;
-                width: calc(100% - 40px);
-            }
-            
             .form-buttons {
                 flex-direction: column;
             }
             
-            .transporte-detalles, .hotel-detalles {
+            .periodo-header {
                 flex-direction: column;
-                gap: 8px;
+                gap: 12px;
             }
         }
         
         @media (max-width: 480px) {
-            .header {
-                padding: 12px 16px;
+            .modal {
+                padding: 10px;
             }
             
-            .header h1 {
-                font-size: 20px;
-            }
-            
-            .stat {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            
-            .timeline-content {
+            .modal-content {
                 padding: 16px;
             }
             
-            .transporte-card, .hotel-card, .ciudad-actividades {
+            .form-section {
                 padding: 16px;
-            }
-            
-            .balance-card {
-                padding: 16px;
-            }
-            
-            .balance-amount {
-                font-size: 20px;
             }
         }
     </style>
@@ -1830,7 +1405,7 @@
 <body>
     <div id="app">
         <div class="header">
-            <h2>Cargando planeador de viaje...</h2>
+            <h2>Cargando organizador de viaje...</h2>
         </div>
     </div>
 </body>
