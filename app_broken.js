@@ -21,7 +21,7 @@ const AppState = {
     viajeData: {},
     selectedStartDate: null,
     selectedEndDate: null,
-    currentView: 'list',
+    currentView: 'list', // 'list' o 'cards'
     expandedRows: new Set(),
     filters: {
         search: '',
@@ -38,177 +38,14 @@ const exchangeRates = {
     MXN: 1.0
 };
 
-// Datos iniciales con ejemplos
+// Datos iniciales
 const initialData = {
     fechaInicio: "2025-12-19",
     fechaFin: "2026-01-07",
-    estancias: [
-        {
-            destino: "Zurich, Suiza",
-            fechaInicio: "2025-12-19",
-            fechaFin: "2025-12-22",
-            notas: "Ciudad de entrada a Europa",
-            hoteles: [
-                {
-                    nombre: "Hotel Schweizerhof Zurich",
-                    tipoHabitacion: "Doble",
-                    fechaInicio: "2025-12-19",
-                    fechaFin: "2025-12-22",
-                    cantidadHabitaciones: 2,
-                    desayunoIncluido: true,
-                    costo: 450,
-                    moneda: "CHF",
-                    notas: "Centro de la ciudad"
-                }
-            ],
-            transportes: [
-                {
-                    tipo: "Avión",
-                    origen: "Ciudad de México",
-                    destino: "Zurich",
-                    fecha: "2025-12-19",
-                    hora: "14:30",
-                    costo: 850,
-                    moneda: "USD",
-                    notas: "Vuelo directo Swiss Air"
-                }
-            ],
-            actividades: [
-                {
-                    nombre: "Visita al Lago de Zurich",
-                    descripcion: "Paseo en barco por el lago",
-                    duracion: "2 horas",
-                    costo: 25,
-                    moneda: "CHF"
-                },
-                {
-                    nombre: "Caminata por el Casco Histórico",
-                    descripcion: "Tour autoguiado por la ciudad vieja",
-                    duracion: "3 horas",
-                    costo: 0,
-                    moneda: "CHF"
-                }
-            ]
-        },
-        {
-            destino: "Milán, Italia",
-            fechaInicio: "2025-12-23",
-            fechaFin: "2025-12-26",
-            notas: "Compras y cultura italiana",
-            hoteles: [
-                {
-                    nombre: "Hotel Spadari al Duomo",
-                    tipoHabitacion: "Triple",
-                    fechaInicio: "2025-12-23",
-                    fechaFin: "2025-12-26",
-                    cantidadHabitaciones: 2,
-                    desayunoIncluido: false,
-                    costo: 320,
-                    moneda: "EUR",
-                    notas: "Cerca del Duomo"
-                }
-            ],
-            transportes: [
-                {
-                    tipo: "Tren",
-                    origen: "Zurich",
-                    destino: "Milán",
-                    fecha: "2025-12-23",
-                    hora: "09:15",
-                    costo: 89,
-                    moneda: "EUR",
-                    notas: "Tren directo 3.5 horas"
-                }
-            ],
-            actividades: [
-                {
-                    nombre: "Tour del Duomo de Milán",
-                    descripcion: "Visita a la catedral y terrazas",
-                    duracion: "2 horas",
-                    costo: 15,
-                    moneda: "EUR"
-                },
-                {
-                    nombre: "Teatro La Scala",
-                    descripcion: "Visita al famoso teatro de ópera",
-                    duracion: "1.5 horas",
-                    costo: 12,
-                    moneda: "EUR"
-                }
-            ]
-        },
-        {
-            destino: "Roma, Italia",
-            fechaInicio: "2025-12-27",
-            fechaFin: "2026-01-02",
-            notas: "La Ciudad Eterna",
-            hoteles: [
-                {
-                    nombre: "Hotel Artemide",
-                    tipoHabitacion: "Familiar",
-                    fechaInicio: "2025-12-27",
-                    fechaFin: "2026-01-02",
-                    cantidadHabitaciones: 2,
-                    desayunoIncluido: true,
-                    costo: 180,
-                    moneda: "EUR",
-                    notas: "Cerca de la Fontana di Trevi"
-                }
-            ],
-            transportes: [
-                {
-                    tipo: "Tren",
-                    origen: "Milán",
-                    destino: "Roma",
-                    fecha: "2025-12-27",
-                    hora: "11:30",
-                    costo: 59,
-                    moneda: "EUR",
-                    notas: "Trenitalia Alta Velocidad"
-                },
-                {
-                    tipo: "Avión",
-                    origen: "Roma",
-                    destino: "Ciudad de México",
-                    fecha: "2026-01-02",
-                    hora: "16:45",
-                    costo: 720,
-                    moneda: "USD",
-                    notas: "Vuelo de regreso Alitalia"
-                }
-            ],
-            actividades: [
-                {
-                    nombre: "Coliseo Romano",
-                    descripcion: "Tour guiado por el anfiteatro",
-                    duracion: "3 horas",
-                    costo: 25,
-                    moneda: "EUR"
-                },
-                {
-                    nombre: "Museos Vaticanos y Capilla Sixtina",
-                    descripcion: "Visita completa al Vaticano",
-                    duracion: "4 horas",
-                    costo: 35,
-                    moneda: "EUR"
-                }
-            ]
-        }
-    ],
+    estancias: [],
     presupuesto: {
-        ingresos: [
-            {
-                id: "1",
-                descripcion: "Ahorro familiar",
-                monto: 150000
-            },
-            {
-                id: "2",
-                descripcion: "Bono navideño",
-                monto: 50000
-            }
-        ],
-        totalDisponible: 200000
+        ingresos: [],
+        totalDisponible: 0
     }
 };
 
@@ -274,22 +111,26 @@ class TripApp {
     }
 
     setupEventListeners() {
+        // Eventos de teclado para navegación
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeModal();
             }
         });
 
+        // Eventos de clic para cerrar modales
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 this.closeModal();
             }
         });
 
+        // Eventos para filtros y búsqueda
         this.setupFilterEvents();
     }
 
     setupFilterEvents() {
+        // Debounce para búsqueda
         let searchTimeout;
         document.addEventListener('input', (e) => {
             if (e.target.classList.contains('search-input')) {
@@ -301,6 +142,7 @@ class TripApp {
             }
         });
 
+        // Filtros de ordenamiento
         document.addEventListener('change', (e) => {
             if (e.target.classList.contains('sort-select')) {
                 AppState.filters.sortBy = e.target.value;
@@ -346,33 +188,23 @@ class TripApp {
             </div>
             
             <div id="calendario" class="tab-content">
-                <div class="section-container">
-                    <h3>📅 Calendario - En desarrollo</h3>
-                </div>
+                ${this.renderCalendario()}
             </div>
             
             <div id="transportes" class="tab-content">
-                <div class="section-container">
-                    <h3>✈️ Transportes - En desarrollo</h3>
-                </div>
+                ${this.renderTransportes()}
             </div>
             
             <div id="hoteles" class="tab-content">
-                <div class="section-container">
-                    <h3>🏨 Hoteles - En desarrollo</h3>
-                </div>
+                ${this.renderHoteles()}
             </div>
             
             <div id="actividades" class="tab-content">
-                <div class="section-container">
-                    <h3>🎯 Actividades - En desarrollo</h3>
-                </div>
+                ${this.renderActividades()}
             </div>
             
             <div id="presupuesto" class="tab-content">
-                <div class="section-container">
-                    <h3>💰 Presupuesto - En desarrollo</h3>
-                </div>
+                ${this.renderPresupuesto()}
             </div>
         `;
     }
@@ -424,7 +256,7 @@ class TripApp {
                         <option value="costo" ${AppState.filters.sortBy === 'costo' ? 'selected' : ''}>💰 Por costo</option>
                         <option value="duracion" ${AppState.filters.sortBy === 'duracion' ? 'selected' : ''}>⏱️ Por duración</option>
                     </select>
-                    <select class="filter-select">
+                    <select class="filter-select filter-select">
                         <option value="all" ${AppState.filters.filterBy === 'all' ? 'selected' : ''}>Todas</option>
                         <option value="hoteles" ${AppState.filters.filterBy === 'hoteles' ? 'selected' : ''}>Con hoteles</option>
                         <option value="transportes" ${AppState.filters.filterBy === 'transportes' ? 'selected' : ''}>Con transportes</option>
@@ -465,6 +297,7 @@ class TripApp {
         const costoTotal = this.calcularCostoEstancia(estancia);
         const hoteles = (estancia.hoteles || []).length;
         const transportes = (estancia.transportes || []).length;
+        const actividades = (estancia.actividades || []).length;
 
         return `
             <div class="estancia-row" data-index="${index}">
@@ -502,15 +335,23 @@ class TripApp {
             <div class="estancia-expandida">
                 <div class="estancia-expanded-content">
                     <div class="categoria-expandida">
-                        <h5>🏨 Hoteles (${(estancia.hoteles || []).length})</h5>
+                        <h5>
+                            🏨 Hoteles (${(estancia.hoteles || []).length})
+                            <button onclick="tripApp.addHotelToEstancia(${index})" class="btn-tiny">➕</button>
+                        </h5>
                         <div class="elementos-compactos">
                             ${(estancia.hoteles || []).map((hotel, hotelIndex) => `
                                 <div class="elemento-compacto">
                                     <div class="elemento-compacto-info">
                                         <strong>${hotel.nombre}</strong>
                                         <span>${this.formatDateShort(hotel.fechaInicio)} - ${this.formatDateShort(hotel.fechaFin)}</span>
+                                        <span>${hotel.desayunoIncluido ? '🍳 Con desayuno' : '❌ Sin desayuno'}</span>
                                     </div>
                                     <div class="precio-compacto">${hotel.moneda} ${hotel.costo.toLocaleString()}</div>
+                                    <div class="elemento-compacto-acciones">
+                                        <button onclick="tripApp.editHotelInEstancia(${index}, ${hotelIndex})" class="btn-tiny">✏️</button>
+                                        <button onclick="tripApp.deleteHotelFromEstancia(${index}, ${hotelIndex})" class="btn-tiny btn-danger">🗑️</button>
+                                    </div>
                                 </div>
                             `).join('')}
                             ${(estancia.hoteles || []).length === 0 ? '<p class="no-elementos">No hay hoteles</p>' : ''}
@@ -518,15 +359,22 @@ class TripApp {
                     </div>
 
                     <div class="categoria-expandida">
-                        <h5>✈️ Transportes (${(estancia.transportes || []).length})</h5>
+                        <h5>
+                            ✈️ Transportes (${(estancia.transportes || []).length})
+                            <button onclick="tripApp.addTransporteToEstancia(${index})" class="btn-tiny">➕</button>
+                        </h5>
                         <div class="elementos-compactos">
                             ${(estancia.transportes || []).map((transporte, transporteIndex) => `
                                 <div class="elemento-compacto">
                                     <div class="elemento-compacto-info">
-                                        <strong>${transporte.origen} → ${transporte.destino}</strong>
-                                        <span>${this.formatDateShort(transporte.fecha)} ${transporte.hora || ''}</span>
+                                        <strong>${this.getTransporteIcon(transporte.tipo)} ${transporte.origen} → ${transporte.destino}</strong>
+                                        <span>${this.formatDateShort(transporte.fecha)} ${transporte.hora ? '- ' + transporte.hora : ''}</span>
                                     </div>
                                     <div class="precio-compacto">${transporte.moneda} ${transporte.costo.toLocaleString()}</div>
+                                    <div class="elemento-compacto-acciones">
+                                        <button onclick="tripApp.editTransporteInEstancia(${index}, ${transporteIndex})" class="btn-tiny">✏️</button>
+                                        <button onclick="tripApp.deleteTransporteFromEstancia(${index}, ${transporteIndex})" class="btn-tiny btn-danger">🗑️</button>
+                                    </div>
                                 </div>
                             `).join('')}
                             ${(estancia.transportes || []).length === 0 ? '<p class="no-elementos">No hay transportes</p>' : ''}
@@ -534,19 +382,26 @@ class TripApp {
                     </div>
 
                     <div class="categoria-expandida">
-                        <h5>🎯 Actividades (${(estancia.actividades || []).length})</h5>
+                        <h5>
+                            🎯 Actividades (${(estancia.actividades || []).length})
+                            <button onclick="tripApp.addActividadToEstancia(${index})" class="btn-tiny">➕</button>
+                        </h5>
                         <div class="elementos-compactos">
                             ${(estancia.actividades || []).map((actividad, actividadIndex) => `
                                 <div class="elemento-compacto">
                                     <div class="elemento-compacto-info">
                                         <strong>${actividad.nombre}</strong>
-                                        <span>${actividad.duracion || ''}</span>
+                                        ${actividad.duracion ? `<span>⏱️ ${actividad.duracion}</span>` : ''}
                                     </div>
                                     <div class="precio-compacto">
                                         ${actividad.costo > 0 ? 
                                             `${actividad.moneda} ${actividad.costo.toLocaleString()}` : 
-                                            'Gratis'
+                                            '<span class="gratis">Gratis</span>'
                                         }
+                                    </div>
+                                    <div class="elemento-compacto-acciones">
+                                        <button onclick="tripApp.editActividadInEstancia(${index}, ${actividadIndex})" class="btn-tiny">✏️</button>
+                                        <button onclick="tripApp.deleteActividadFromEstancia(${index}, ${actividadIndex})" class="btn-tiny btn-danger">🗑️</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -561,24 +416,56 @@ class TripApp {
     renderEstanciasCards(estancias) {
         return `
             <div class="estancias-lista">
-                ${estancias.map((estancia, index) => `
-                    <div class="estancia-card-completa">
-                        <div class="estancia-header-main">
-                            <div class="estancia-info-principal">
-                                <h4>${this.formatDateRange(estancia.fechaInicio, estancia.fechaFin)}</h4>
-                                <span class="duracion-badge">${this.calcularDias(estancia.fechaInicio, estancia.fechaFin)} días</span>
-                                <h3>${estancia.destino}</h3>
-                            </div>
-                            <div class="estancia-acciones-main">
-                                <button onclick="tripApp.editEstancia(${index})" class="btn-edit">✏️ Editar</button>
-                                <button onclick="tripApp.deleteEstancia(${index})" class="btn-delete">🗑️ Eliminar</button>
-                            </div>
-                        </div>
-                        <div class="estancia-total">
-                            <strong>Total estancia: $${this.calcularCostoEstancia(estancia).toLocaleString()} MXN</strong>
-                        </div>
+                ${estancias.map((estancia, index) => this.renderEstanciaCard(estancia, index)).join('')}
+            </div>
+        `;
+    }
+
+    renderEstanciaCard(estancia, index) {
+        // Mantener el código original de las cards para compatibilidad
+        return `
+            <div class="estancia-card-completa">
+                <div class="estancia-header-main">
+                    <div class="estancia-info-principal">
+                        <h4>${this.formatDateRange(estancia.fechaInicio, estancia.fechaFin)}</h4>
+                        <span class="duracion-badge">${this.calcularDias(estancia.fechaInicio, estancia.fechaFin)} días</span>
+                        <h3>${estancia.destino}</h3>
                     </div>
-                `).join('')}
+                    <div class="estancia-acciones-main">
+                        <button onclick="tripApp.editEstancia(${index})" class="btn-edit">✏️ Editar</button>
+                        <button onclick="tripApp.deleteEstancia(${index})" class="btn-delete">🗑️ Eliminar</button>
+                    </div>
+                </div>
+                
+                <div class="categoria-section">
+                    <div class="categoria-header">
+                        <h5>🏨 Hoteles</h5>
+                        <button onclick="tripApp.addHotelToEstancia(${index})" class="btn-small-add">➕</button>
+                    </div>
+                    <div class="elementos-mini">
+                        ${(estancia.hoteles || []).map((hotel, hotelIndex) => `
+                            <div class="elemento-mini hotel-mini">
+                                <div class="elemento-mini-info">
+                                    <strong>${hotel.nombre}</strong>
+                                    <span>${this.formatDateShort(hotel.fechaInicio)} - ${this.formatDateShort(hotel.fechaFin)}</span>
+                                    <span class="precio-mini">${hotel.moneda} ${hotel.costo.toLocaleString()}</span>
+                                    <span class="desayuno-mini ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
+                                        ${hotel.desayunoIncluido ? '🍳 Con desayuno' : '❌ Sin desayuno'}
+                                    </span>
+                                </div>
+                                <div class="elemento-mini-acciones">
+                                    <button onclick="tripApp.editHotelInEstancia(${index}, ${hotelIndex})" class="btn-tiny">✏️</button>
+                                    <button onclick="tripApp.deleteHotelFromEstancia(${index}, ${hotelIndex})" class="btn-tiny btn-danger">🗑️</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${(estancia.hoteles || []).length === 0 ? '<p class="no-elementos">No hay hoteles</p>' : ''}
+                    </div>
+                </div>
+                
+                <div class="estancia-total">
+                    <strong>Total estancia: $${this.calcularCostoEstancia(estancia).toLocaleString()} MXN</strong>
+                </div>
             </div>
         `;
     }
@@ -598,12 +485,30 @@ class TripApp {
     getFilteredEstancias() {
         let estancias = [...(AppState.viajeData.estancias || [])];
 
+        // Filtrar por búsqueda
         if (AppState.filters.search) {
             estancias = estancias.filter(estancia => 
                 estancia.destino.toLowerCase().includes(AppState.filters.search.toLowerCase())
             );
         }
 
+        // Filtrar por tipo
+        if (AppState.filters.filterBy !== 'all') {
+            estancias = estancias.filter(estancia => {
+                switch (AppState.filters.filterBy) {
+                    case 'hoteles':
+                        return (estancia.hoteles || []).length > 0;
+                    case 'transportes':
+                        return (estancia.transportes || []).length > 0;
+                    case 'actividades':
+                        return (estancia.actividades || []).length > 0;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Ordenar
         estancias.sort((a, b) => {
             switch (AppState.filters.sortBy) {
                 case 'destino':
@@ -646,15 +551,15 @@ class TripApp {
     }
 
     showTab(tabName) {
+        // Remover clase active de todos los tabs y contenido
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-        const clickedTab = document.querySelector(`[onclick="tripApp.showTab('${tabName}')"]`);
-        if (clickedTab) clickedTab.classList.add('active');
-        
-        const tabContent = document.getElementById(tabName);
-        if (tabContent) tabContent.classList.add('active');
+        // Activar el tab seleccionado
+        event.target.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
 
+        // Renderizar contenido específico si es necesario
         if (tabName === 'itinerario') {
             this.renderItinerario();
         }
@@ -665,37 +570,7 @@ class TripApp {
         if (modal) modal.remove();
     }
 
-    // Métodos de gestión de estancias
-    addEstancia() {
-        const nuevaEstancia = {
-            destino: "Nueva Estancia",
-            fechaInicio: "2025-12-20",
-            fechaFin: "2025-12-23",
-            notas: "",
-            hoteles: [],
-            transportes: [],
-            actividades: []
-        };
-        
-        AppState.viajeData.estancias.push(nuevaEstancia);
-        this.saveData('viajeData', AppState.viajeData);
-        this.renderItinerario();
-    }
-    
-    editEstancia(index) {
-        alert(`Funcionalidad de edición en desarrollo. Estancia: ${AppState.viajeData.estancias[index]?.destino}`);
-    }
-    
-    deleteEstancia(index) {
-        if (confirm('¿Estás seguro de eliminar esta estancia?')) {
-            AppState.viajeData.estancias.splice(index, 1);
-            AppState.expandedRows.delete(index);
-            this.saveData('viajeData', AppState.viajeData);
-            this.renderItinerario();
-        }
-    }
-
-    // Métodos de utilidad
+    // Métodos de utilidad (mantener los existentes)
     calcularDiasViaje() {
         const inicio = new Date(AppState.viajeData.fechaInicio || "2025-12-19");
         const fin = new Date(AppState.viajeData.fechaFin || "2026-01-07");
@@ -754,6 +629,37 @@ class TripApp {
             month: 'short'
         });
     }
+
+    getTransporteIcon(tipo) {
+        const iconos = {
+            'Avión': '✈️',
+            'Tren': '🚆',
+            'Autobús': '🚌',
+            'Auto': '🚗'
+        };
+        return iconos[tipo] || '🚗';
+    }
+
+    // Métodos placeholder para mantener compatibilidad (implementar según necesidad)
+    addEstancia() { console.log('addEstancia - implementar modal'); }
+    editEstancia(index) { console.log('editEstancia', index); }
+    deleteEstancia(index) { console.log('deleteEstancia', index); }
+    addHotelToEstancia(index) { console.log('addHotelToEstancia', index); }
+    editHotelInEstancia(estanciaIndex, hotelIndex) { console.log('editHotelInEstancia', estanciaIndex, hotelIndex); }
+    deleteHotelFromEstancia(estanciaIndex, hotelIndex) { console.log('deleteHotelFromEstancia', estanciaIndex, hotelIndex); }
+    addTransporteToEstancia(index) { console.log('addTransporteToEstancia', index); }
+    editTransporteInEstancia(estanciaIndex, transporteIndex) { console.log('editTransporteInEstancia', estanciaIndex, transporteIndex); }
+    deleteTransporteFromEstancia(estanciaIndex, transporteIndex) { console.log('deleteTransporteFromEstancia', estanciaIndex, transporteIndex); }
+    addActividadToEstancia(index) { console.log('addActividadToEstancia', index); }
+    editActividadInEstancia(estanciaIndex, actividadIndex) { console.log('editActividadInEstancia', estanciaIndex, actividadIndex); }
+    deleteActividadFromEstancia(estanciaIndex, actividadIndex) { console.log('deleteActividadFromEstancia', estanciaIndex, actividadIndex); }
+
+    // Métodos placeholder para otras secciones
+    renderCalendario() { return '<div class="loading-state">Calendario - Implementar</div>'; }
+    renderTransportes() { return '<div class="loading-state">Transportes - Implementar</div>'; }
+    renderHoteles() { return '<div class="loading-state">Hoteles - Implementar</div>'; }
+    renderActividades() { return '<div class="loading-state">Actividades - Implementar</div>'; }
+    renderPresupuesto() { return '<div class="loading-state">Presupuesto - Implementar</div>'; }
 }
 
 // Inicializar aplicación
