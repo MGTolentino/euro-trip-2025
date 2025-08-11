@@ -31,7 +31,6 @@
             console.error('Error Firebase:', error);
         }
 
-        // Tasas de conversión actualizadas
         const exchangeRates = {
             USD: 20.0,
             EUR: 21.5,
@@ -40,12 +39,9 @@
         };
 
         const initialData = {
-            fechaInicio: "2025-12-19", // Fechas correctas
+            fechaInicio: "2025-12-19",
             fechaFin: "2026-01-07",
             estancias: [],
-            transportes: [],
-            hoteles: [],
-            actividades: [],
             presupuesto: {
                 ingresos: [],
                 totalDisponible: 0
@@ -88,14 +84,12 @@
 
             renderApp();
             
-            // Cerrar modal al hacer click fuera
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('modal')) {
                     closeModal();
                 }
             });
             
-            // Cerrar modal con Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeModal();
@@ -161,65 +155,104 @@
             return `
                 <div class="itinerario-container">
                     <div class="itinerario-header">
-                        <h3>📋 Vista General del Viaje</h3>
+                        <h3>📋 Planificación del Viaje</h3>
                         <button onclick="addEstancia()" class="btn-primary">➕ Nueva Estancia</button>
                     </div>
                     
                     ${(viajeData.estancias || []).length > 0 ? `
-                        <div class="estancias-compactas">
+                        <div class="estancias-lista">
                             ${(viajeData.estancias || []).map((estancia, index) => `
-                                <div class="estancia-compacta" onclick="toggleEstanciaDetails(${index})">
-                                    <div class="estancia-resumen">
-                                        <div class="estancia-fechas-comp">
+                                <div class="estancia-card-completa">
+                                    <div class="estancia-header-main">
+                                        <div class="estancia-info-principal">
                                             <h4>${formatDateRange(estancia.fechaInicio, estancia.fechaFin)}</h4>
-                                            <span class="duracion-comp">${calcularDias(estancia.fechaInicio, estancia.fechaFin)} días</span>
+                                            <span class="duracion">${calcularDias(estancia.fechaInicio, estancia.fechaFin)} días</span>
+                                            <h3>${estancia.destino}</h3>
                                         </div>
-                                        <div class="estancia-destino-comp">
-                                            <span class="destino">${estancia.destino || 'Destino no definido'}</span>
-                                            <span class="chevron">▼</span>
-                                        </div>
-                                        <div class="estancia-acciones-comp">
-                                            <button onclick="editEstancia(${index}); event.stopPropagation();" class="btn-small">✏️</button>
-                                            <button onclick="deleteEstancia(${index}); event.stopPropagation();" class="btn-small btn-danger">🗑️</button>
+                                        <div class="estancia-acciones-main">
+                                            <button onclick="editEstancia(${index})" class="btn-edit">✏️ Editar</button>
+                                            <button onclick="deleteEstancia(${index})" class="btn-delete">🗑️ Eliminar</button>
                                         </div>
                                     </div>
                                     
-                                    <div class="estancia-detalles-comp" id="detalles-${index}" style="display: none;">
-                                        <div class="detalles-grid">
-                                            <div class="detalle-item-comp">
-                                                <span class="icon">🏨</span>
-                                                <div class="detalle-content">
-                                                    <strong>Hospedaje:</strong>
-                                                    <p>${estancia.hotel || 'No definido'}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="detalle-item-comp">
-                                                <span class="icon">✈️</span>
-                                                <div class="detalle-content">
-                                                    <strong>Transporte:</strong>
-                                                    <p>${estancia.transporte || 'No definido'}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="detalle-item-comp">
-                                                <span class="icon">🎯</span>
-                                                <div class="detalle-content">
-                                                    <strong>Actividades:</strong>
-                                                    <p>${estancia.actividades || 'No definidas'}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            ${estancia.notas ? `
-                                                <div class="detalle-item-comp">
-                                                    <span class="icon">📝</span>
-                                                    <div class="detalle-content">
-                                                        <strong>Notas:</strong>
-                                                        <p>${estancia.notas}</p>
+                                    <!-- Hoteles de esta estancia -->
+                                    <div class="categoria-section">
+                                        <div class="categoria-header">
+                                            <h5>🏨 Hoteles</h5>
+                                            <button onclick="addHotelToEstancia(${index})" class="btn-small-add">➕</button>
+                                        </div>
+                                        <div class="elementos-mini">
+                                            ${(estancia.hoteles || []).map((hotel, hotelIndex) => `
+                                                <div class="elemento-mini hotel-mini">
+                                                    <div class="elemento-mini-info">
+                                                        <strong>${hotel.nombre}</strong>
+                                                        <span>${formatDateShort(hotel.fechaInicio)} - ${formatDateShort(hotel.fechaFin)}</span>
+                                                        <span class="precio-mini">${hotel.moneda} ${hotel.costo.toLocaleString()}</span>
+                                                        <span class="desayuno-mini ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
+                                                            ${hotel.desayunoIncluido ? '🍳 Con desayuno' : '❌ Sin desayuno'}
+                                                        </span>
+                                                    </div>
+                                                    <div class="elemento-mini-acciones">
+                                                        <button onclick="editHotelInEstancia(${index}, ${hotelIndex})" class="btn-tiny">✏️</button>
+                                                        <button onclick="deleteHotelFromEstancia(${index}, ${hotelIndex})" class="btn-tiny btn-danger">🗑️</button>
                                                     </div>
                                                 </div>
-                                            ` : ''}
+                                            `).join('')}
+                                            ${(estancia.hoteles || []).length === 0 ? '<p class="no-elementos">No hay hoteles</p>' : ''}
                                         </div>
+                                    </div>
+                                    
+                                    <!-- Transportes de esta estancia -->
+                                    <div class="categoria-section">
+                                        <div class="categoria-header">
+                                            <h5>✈️ Transportes</h5>
+                                            <button onclick="addTransporteToEstancia(${index})" class="btn-small-add">➕</button>
+                                        </div>
+                                        <div class="elementos-mini">
+                                            ${(estancia.transportes || []).map((transporte, transporteIndex) => `
+                                                <div class="elemento-mini transporte-mini">
+                                                    <div class="elemento-mini-info">
+                                                        <strong>${getTransporteIcon(transporte.tipo)} ${transporte.origen} → ${transporte.destino}</strong>
+                                                        <span>${formatDateShort(transporte.fecha)} ${transporte.hora ? '- ' + transporte.hora : ''}</span>
+                                                        <span class="precio-mini">${transporte.moneda} ${transporte.costo.toLocaleString()}</span>
+                                                    </div>
+                                                    <div class="elemento-mini-acciones">
+                                                        <button onclick="editTransporteInEstancia(${index}, ${transporteIndex})" class="btn-tiny">✏️</button>
+                                                        <button onclick="deleteTransporteFromEstancia(${index}, ${transporteIndex})" class="btn-tiny btn-danger">🗑️</button>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                            ${(estancia.transportes || []).length === 0 ? '<p class="no-elementos">No hay transportes</p>' : ''}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Actividades de esta estancia -->
+                                    <div class="categoria-section">
+                                        <div class="categoria-header">
+                                            <h5>🎯 Actividades</h5>
+                                            <button onclick="addActividadToEstancia(${index})" class="btn-small-add">➕</button>
+                                        </div>
+                                        <div class="elementos-mini">
+                                            ${(estancia.actividades || []).map((actividad, actividadIndex) => `
+                                                <div class="elemento-mini actividad-mini">
+                                                    <div class="elemento-mini-info">
+                                                        <strong>${actividad.nombre}</strong>
+                                                        ${actividad.duracion ? `<span>⏱️ ${actividad.duracion}</span>` : ''}
+                                                        ${actividad.costo > 0 ? `<span class="precio-mini">${actividad.moneda} ${actividad.costo.toLocaleString()}</span>` : '<span class="gratis">Gratis</span>'}
+                                                    </div>
+                                                    <div class="elemento-mini-acciones">
+                                                        <button onclick="editActividadInEstancia(${index}, ${actividadIndex})" class="btn-tiny">✏️</button>
+                                                        <button onclick="deleteActividadFromEstancia(${index}, ${actividadIndex})" class="btn-tiny btn-danger">🗑️</button>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                            ${(estancia.actividades || []).length === 0 ? '<p class="no-elementos">No hay actividades</p>' : ''}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Costo total de la estancia -->
+                                    <div class="estancia-total">
+                                        <strong>Total estancia: $${calcularCostoEstancia(estancia).toLocaleString()} MXN</strong>
                                     </div>
                                 </div>
                             `).join('')}
@@ -277,110 +310,47 @@
             `;
         }
 
-        function renderMesCompleto(mesAno, titulo) {
-            const [ano, mes] = mesAno.split('-').map(Number);
-            const primerDia = new Date(ano, mes - 1, 1);
-            const ultimoDia = new Date(ano, mes, 0);
-            const diasEnMes = ultimoDia.getDate();
-            const diaSemanaInicio = primerDia.getDay();
-            
-            let calendario = `
-                <div class="mes-completo">
-                    <h4 class="mes-titulo">${titulo}</h4>
-                    <div class="dias-semana-header">
-                        <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
-                    </div>
-                    <div class="dias-mes-grid">
-            `;
-            
-            // Espacios en blanco antes del primer día
-            for (let i = 0; i < diaSemanaInicio; i++) {
-                calendario += '<div class="dia-vacio"></div>';
-            }
-            
-            // Días del mes
-            for (let dia = 1; dia <= diasEnMes; dia++) {
-                const fecha = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                const esViaje = esFechaDeViaje(fecha);
-                const tieneEstancia = tieneEstanciaEnFecha(fecha);
-                const esSeleccionado = esFechaSeleccionada(fecha);
-                const esEnRango = esFechaEnRango(fecha);
-                
-                calendario += `
-                    <div class="dia-clickeable ${esViaje ? 'dia-viaje' : ''} ${tieneEstancia ? 'dia-ocupado' : ''} ${esSeleccionado ? 'dia-seleccionado' : ''} ${esEnRango ? 'dia-en-rango' : ''}" 
-                         data-fecha="${fecha}" onclick="selectFecha('${fecha}')">
-                        ${dia}
-                    </div>
-                `;
-            }
-            
-            calendario += `
-                    </div>
-                </div>
-            `;
-            
-            return calendario;
-        }
-
-        function esFechaDeViaje(fecha) {
-            return fecha >= "2025-12-19" && fecha <= "2026-01-07";
-        }
-
-        function tieneEstanciaEnFecha(fecha) {
-            return (viajeData.estancias || []).some(estancia => 
-                fecha >= estancia.fechaInicio && fecha <= estancia.fechaFin
-            );
-        }
-
-        function esFechaSeleccionada(fecha) {
-            return fecha === selectedStartDate || fecha === selectedEndDate;
-        }
-
-        function esFechaEnRango(fecha) {
-            if (!selectedStartDate || !selectedEndDate) return false;
-            return fecha > selectedStartDate && fecha < selectedEndDate;
-        }
-
         function renderTransportes() {
+            const todosTransportes = getAllTransportes();
             return `
                 <div class="section-container">
                     <div class="section-header">
-                        <h3>✈️ Gestión de Transportes</h3>
-                        <button onclick="addTransporte()" class="btn-primary">➕ Nuevo Transporte</button>
+                        <h3>✈️ Todos los Transportes</h3>
+                        <p class="section-subtitle">Gestiona los transportes de todas tus estancias</p>
                     </div>
                     
                     <div class="elementos-grid">
-                        ${(viajeData.transportes || []).map(transporte => `
+                        ${todosTransportes.map(item => `
                             <div class="elemento-card transporte-card">
                                 <div class="elemento-header">
-                                    <div class="tipo-badge ${transporte.tipo.toLowerCase()}">
-                                        ${getTransporteIcon(transporte.tipo)} ${transporte.tipo}
+                                    <div class="tipo-badge ${item.transporte.tipo.toLowerCase()}">
+                                        ${getTransporteIcon(item.transporte.tipo)} ${item.transporte.tipo}
                                     </div>
                                     <div class="precios">
-                                        <div class="precio-original">${transporte.moneda} ${transporte.costoOriginal.toLocaleString()}</div>
-                                        <div class="precio-mxn">$${convertirAMXN(transporte.costoOriginal, transporte.moneda).toLocaleString()} MXN</div>
+                                        <div class="precio-original">${item.transporte.moneda} ${item.transporte.costo.toLocaleString()}</div>
+                                        <div class="precio-mxn">$${convertirAMXN(item.transporte.costo, item.transporte.moneda).toLocaleString()} MXN</div>
                                     </div>
                                 </div>
                                 
                                 <div class="elemento-contenido">
-                                    <h4>${transporte.origen} → ${transporte.destino}</h4>
+                                    <h4>${item.transporte.origen} → ${item.transporte.destino}</h4>
                                     <div class="detalles">
-                                        ${transporte.fecha ? `<span>📅 ${formatDateLong(transporte.fecha)}</span>` : ''}
-                                        ${transporte.hora ? `<span>🕐 ${transporte.hora}</span>` : ''}
-                                        <span>👥 Para 4 personas</span>
+                                        <span>📅 ${formatDateLong(item.transporte.fecha)}</span>
+                                        ${item.transporte.hora ? `<span>🕐 ${item.transporte.hora}</span>` : ''}
+                                        <span>🏷️ ${getEstanciaNombre(item.estanciaIndex)}</span>
                                     </div>
-                                    ${transporte.notas ? `<p class="notas">${transporte.notas}</p>` : ''}
+                                    ${item.transporte.notas ? `<p class="notas">${item.transporte.notas}</p>` : ''}
                                 </div>
                                 
                                 <div class="elemento-acciones">
-                                    <button onclick="editTransporte('${transporte.id}')" class="btn-small">✏️ Editar</button>
-                                    <button onclick="deleteTransporte('${transporte.id}')" class="btn-small btn-danger">🗑️ Eliminar</button>
+                                    <button onclick="editTransporteInEstancia(${item.estanciaIndex}, ${item.transporteIndex})" class="btn-small">✏️ Editar</button>
+                                    <button onclick="deleteTransporteFromEstancia(${item.estanciaIndex}, ${item.transporteIndex})" class="btn-small btn-danger">🗑️ Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
                         
-                        ${(viajeData.transportes || []).length === 0 ? 
-                            '<div class="empty-message">No hay transportes registrados</div>' : ''
+                        ${todosTransportes.length === 0 ? 
+                            '<div class="empty-message">No hay transportes registrados<br><small>Agrega transportes desde las estancias en el itinerario</small></div>' : ''
                         }
                     </div>
                 </div>
@@ -388,48 +358,49 @@
         }
 
         function renderHoteles() {
+            const todosHoteles = getAllHoteles();
             return `
                 <div class="section-container">
                     <div class="section-header">
-                        <h3>🏨 Gestión de Hoteles</h3>
-                        <button onclick="addHotel()" class="btn-primary">➕ Nuevo Hotel</button>
+                        <h3>🏨 Todos los Hoteles</h3>
+                        <p class="section-subtitle">Gestiona los hoteles de todas tus estancias</p>
                     </div>
                     
                     <div class="elementos-grid">
-                        ${(viajeData.hoteles || []).map(hotel => `
+                        ${todosHoteles.map(item => `
                             <div class="elemento-card hotel-card">
                                 <div class="elemento-header">
                                     <div class="hotel-info">
-                                        <h4>${hotel.nombre}</h4>
-                                        <span class="ciudad">${hotel.ciudad}</span>
-                                        <span class="fechas">${formatDateShort(hotel.fechaInicio)} - ${formatDateShort(hotel.fechaFin)}</span>
+                                        <h4>${item.hotel.nombre}</h4>
+                                        <span class="ciudad">${getEstanciaNombre(item.estanciaIndex)}</span>
+                                        <span class="fechas">${formatDateShort(item.hotel.fechaInicio)} - ${formatDateShort(item.hotel.fechaFin)}</span>
                                     </div>
                                     <div class="precios">
-                                        <div class="precio-original">${hotel.moneda} ${hotel.costoOriginal.toLocaleString()}</div>
-                                        <div class="precio-mxn">$${convertirAMXN(hotel.costoOriginal, hotel.moneda).toLocaleString()} MXN</div>
+                                        <div class="precio-original">${item.hotel.moneda} ${item.hotel.costo.toLocaleString()}</div>
+                                        <div class="precio-mxn">$${convertirAMXN(item.hotel.costo, item.hotel.moneda).toLocaleString()} MXN</div>
                                     </div>
                                 </div>
                                 
                                 <div class="elemento-contenido">
                                     <div class="detalles">
-                                        <span>🛏️ ${hotel.tipoHabitacion || 'Habitación estándar'}</span>
-                                        <span>📦 ${hotel.cantidadHabitaciones || 1} habitación(es)</span>
-                                        <span class="desayuno ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
-                                            🍳 ${hotel.desayunoIncluido ? 'Con desayuno' : 'Sin desayuno'}
+                                        <span>🛏️ ${item.hotel.tipoHabitacion}</span>
+                                        <span>📦 ${item.hotel.cantidadHabitaciones} habitación(es)</span>
+                                        <span class="desayuno ${item.hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
+                                            🍳 ${item.hotel.desayunoIncluido ? 'Con desayuno' : 'Sin desayuno'}
                                         </span>
                                     </div>
-                                    ${hotel.notas ? `<p class="notas">${hotel.notas}</p>` : ''}
+                                    ${item.hotel.notas ? `<p class="notas">${item.hotel.notas}</p>` : ''}
                                 </div>
                                 
                                 <div class="elemento-acciones">
-                                    <button onclick="editHotel('${hotel.id}')" class="btn-small">✏️ Editar</button>
-                                    <button onclick="deleteHotel('${hotel.id}')" class="btn-small btn-danger">🗑️ Eliminar</button>
+                                    <button onclick="editHotelInEstancia(${item.estanciaIndex}, ${item.hotelIndex})" class="btn-small">✏️ Editar</button>
+                                    <button onclick="deleteHotelFromEstancia(${item.estanciaIndex}, ${item.hotelIndex})" class="btn-small btn-danger">🗑️ Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
                         
-                        ${(viajeData.hoteles || []).length === 0 ? 
-                            '<div class="empty-message">No hay hoteles registrados</div>' : ''
+                        ${todosHoteles.length === 0 ? 
+                            '<div class="empty-message">No hay hoteles registrados<br><small>Agrega hoteles desde las estancias en el itinerario</small></div>' : ''
                         }
                     </div>
                 </div>
@@ -437,46 +408,47 @@
         }
 
         function renderActividades() {
+            const todasActividades = getAllActividades();
             return `
                 <div class="section-container">
                     <div class="section-header">
-                        <h3>🎯 Gestión de Actividades</h3>
-                        <button onclick="addActividad()" class="btn-primary">➕ Nueva Actividad</button>
+                        <h3>🎯 Todas las Actividades</h3>
+                        <p class="section-subtitle">Gestiona las actividades de todas tus estancias</p>
                     </div>
                     
                     <div class="elementos-grid">
-                        ${(viajeData.actividades || []).map(actividad => `
+                        ${todasActividades.map(item => `
                             <div class="elemento-card actividad-card">
                                 <div class="elemento-header">
                                     <div class="actividad-info">
-                                        <h4>${actividad.nombre}</h4>
-                                        <span class="ciudad">${actividad.ciudad}</span>
+                                        <h4>${item.actividad.nombre}</h4>
+                                        <span class="ciudad">${getEstanciaNombre(item.estanciaIndex)}</span>
                                     </div>
-                                    ${actividad.costoOriginal > 0 ? `
+                                    ${item.actividad.costo > 0 ? `
                                         <div class="precios">
-                                            <div class="precio-original">${actividad.moneda} ${actividad.costoOriginal.toLocaleString()}</div>
-                                            <div class="precio-mxn">$${convertirAMXN(actividad.costoOriginal, actividad.moneda).toLocaleString()} MXN</div>
+                                            <div class="precio-original">${item.actividad.moneda} ${item.actividad.costo.toLocaleString()}</div>
+                                            <div class="precio-mxn">$${convertirAMXN(item.actividad.costo, item.actividad.moneda).toLocaleString()} MXN</div>
                                         </div>
-                                    ` : ''}
+                                    ` : '<div class="precio-gratis">Gratis</div>'}
                                 </div>
                                 
                                 <div class="elemento-contenido">
-                                    ${actividad.descripcion ? `<p class="descripcion">${actividad.descripcion}</p>` : ''}
+                                    ${item.actividad.descripcion ? `<p class="descripcion">${item.actividad.descripcion}</p>` : ''}
                                     <div class="detalles">
                                         <span>👥 Para 4 personas</span>
-                                        ${actividad.duracion ? `<span>⏱️ ${actividad.duracion}</span>` : ''}
+                                        ${item.actividad.duracion ? `<span>⏱️ ${item.actividad.duracion}</span>` : ''}
                                     </div>
                                 </div>
                                 
                                 <div class="elemento-acciones">
-                                    <button onclick="editActividad('${actividad.id}')" class="btn-small">✏️ Editar</button>
-                                    <button onclick="deleteActividad('${actividad.id}')" class="btn-small btn-danger">🗑️ Eliminar</button>
+                                    <button onclick="editActividadInEstancia(${item.estanciaIndex}, ${item.actividadIndex})" class="btn-small">✏️ Editar</button>
+                                    <button onclick="deleteActividadFromEstancia(${item.estanciaIndex}, ${item.actividadIndex})" class="btn-small btn-danger">🗑️ Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
                         
-                        ${(viajeData.actividades || []).length === 0 ? 
-                            '<div class="empty-message">No hay actividades registradas</div>' : ''
+                        ${todasActividades.length === 0 ? 
+                            '<div class="empty-message">No hay actividades registradas<br><small>Agrega actividades desde las estancias en el itinerario</small></div>' : ''
                         }
                     </div>
                 </div>
@@ -556,11 +528,97 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="presupuesto-por-estancia">
+                        <h4>📊 Costo por Estancia</h4>
+                        <div class="estancias-costos">
+                            ${(viajeData.estancias || []).map((estancia, index) => `
+                                <div class="estancia-costo">
+                                    <span class="estancia-nombre">${estancia.destino}</span>
+                                    <span class="estancia-fechas">${formatDateShort(estancia.fechaInicio)} - ${formatDateShort(estancia.fechaFin)}</span>
+                                    <span class="estancia-monto">$${calcularCostoEstancia(estancia).toLocaleString()} MXN</span>
+                                </div>
+                            `).join('')}
+                            
+                            ${(viajeData.estancias || []).length === 0 ? 
+                                '<div class="empty-message">No hay estancias para mostrar costos</div>' : ''
+                            }
+                        </div>
+                    </div>
                 </div>
             `;
         }
 
-        // Funciones auxiliares
+        // Funciones auxiliares para obtener todos los elementos
+        function getAllTransportes() {
+            const transportes = [];
+            (viajeData.estancias || []).forEach((estancia, estanciaIndex) => {
+                (estancia.transportes || []).forEach((transporte, transporteIndex) => {
+                    transportes.push({ 
+                        transporte, 
+                        estanciaIndex, 
+                        transporteIndex 
+                    });
+                });
+            });
+            return transportes;
+        }
+
+        function getAllHoteles() {
+            const hoteles = [];
+            (viajeData.estancias || []).forEach((estancia, estanciaIndex) => {
+                (estancia.hoteles || []).forEach((hotel, hotelIndex) => {
+                    hoteles.push({ 
+                        hotel, 
+                        estanciaIndex, 
+                        hotelIndex 
+                    });
+                });
+            });
+            return hoteles;
+        }
+
+        function getAllActividades() {
+            const actividades = [];
+            (viajeData.estancias || []).forEach((estancia, estanciaIndex) => {
+                (estancia.actividades || []).forEach((actividad, actividadIndex) => {
+                    actividades.push({ 
+                        actividad, 
+                        estanciaIndex, 
+                        actividadIndex 
+                    });
+                });
+            });
+            return actividades;
+        }
+
+        function getEstanciaNombre(estanciaIndex) {
+            const estancia = viajeData.estancias[estanciaIndex];
+            return estancia ? estancia.destino : 'Estancia eliminada';
+        }
+
+        function calcularCostoEstancia(estancia) {
+            let total = 0;
+            
+            // Hoteles
+            (estancia.hoteles || []).forEach(hotel => {
+                total += convertirAMXN(hotel.costo, hotel.moneda);
+            });
+            
+            // Transportes
+            (estancia.transportes || []).forEach(transporte => {
+                total += convertirAMXN(transporte.costo, transporte.moneda);
+            });
+            
+            // Actividades
+            (estancia.actividades || []).forEach(actividad => {
+                total += convertirAMXN(actividad.costo || 0, actividad.moneda);
+            });
+            
+            return total;
+        }
+
+        // Resto de funciones auxiliares (mantienen la misma lógica)
         function convertirAMXN(cantidad, moneda) {
             return Math.round(cantidad * exchangeRates[moneda]);
         }
@@ -618,21 +676,99 @@
         }
 
         function calcularCostoTransportes() {
-            return (viajeData.transportes || []).reduce((sum, transporte) => 
-                sum + convertirAMXN(transporte.costoOriginal || 0, transporte.moneda || 'MXN'), 0);
+            let total = 0;
+            (viajeData.estancias || []).forEach(estancia => {
+                (estancia.transportes || []).forEach(transporte => {
+                    total += convertirAMXN(transporte.costo || 0, transporte.moneda || 'MXN');
+                });
+            });
+            return total;
         }
 
         function calcularCostoHoteles() {
-            return (viajeData.hoteles || []).reduce((sum, hotel) => 
-                sum + convertirAMXN(hotel.costoOriginal || 0, hotel.moneda || 'MXN'), 0);
+            let total = 0;
+            (viajeData.estancias || []).forEach(estancia => {
+                (estancia.hoteles || []).forEach(hotel => {
+                    total += convertirAMXN(hotel.costo || 0, hotel.moneda || 'MXN');
+                });
+            });
+            return total;
         }
 
         function calcularCostoActividades() {
-            return (viajeData.actividades || []).reduce((sum, actividad) => 
-                sum + convertirAMXN(actividad.costoOriginal || 0, actividad.moneda || 'MXN'), 0);
+            let total = 0;
+            (viajeData.estancias || []).forEach(estancia => {
+                (estancia.actividades || []).forEach(actividad => {
+                    total += convertirAMXN(actividad.costo || 0, actividad.moneda || 'MXN');
+                });
+            });
+            return total;
         }
 
-        // Funciones globales
+        // Funciones del calendario (mantienen la misma lógica)
+        function renderMesCompleto(mesAno, titulo) {
+            const [ano, mes] = mesAno.split('-').map(Number);
+            const primerDia = new Date(ano, mes - 1, 1);
+            const ultimoDia = new Date(ano, mes, 0);
+            const diasEnMes = ultimoDia.getDate();
+            const diaSemanaInicio = primerDia.getDay();
+            
+            let calendario = `
+                <div class="mes-completo">
+                    <h4 class="mes-titulo">${titulo}</h4>
+                    <div class="dias-semana-header">
+                        <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+                    </div>
+                    <div class="dias-mes-grid">
+            `;
+            
+            for (let i = 0; i < diaSemanaInicio; i++) {
+                calendario += '<div class="dia-vacio"></div>';
+            }
+            
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const fecha = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                const esViaje = esFechaDeViaje(fecha);
+                const tieneEstancia = tieneEstanciaEnFecha(fecha);
+                const esSeleccionado = esFechaSeleccionada(fecha);
+                const esEnRango = esFechaEnRango(fecha);
+                
+                calendario += `
+                    <div class="dia-clickeable ${esViaje ? 'dia-viaje' : ''} ${tieneEstancia ? 'dia-ocupado' : ''} ${esSeleccionado ? 'dia-seleccionado' : ''} ${esEnRango ? 'dia-en-rango' : ''}" 
+                         data-fecha="${fecha}" onclick="selectFecha('${fecha}')">
+                        ${dia}
+                    </div>
+                `;
+            }
+            
+            calendario += `
+                    </div>
+                </div>
+            `;
+            
+            return calendario;
+        }
+
+        function esFechaDeViaje(fecha) {
+            return fecha >= "2025-12-19" && fecha <= "2026-01-07";
+        }
+
+        function tieneEstanciaEnFecha(fecha) {
+            return (viajeData.estancias || []).some(estancia => 
+                fecha >= estancia.fechaInicio && fecha <= estancia.fechaFin
+            );
+        }
+
+        function esFechaSeleccionada(fecha) {
+            return fecha === selectedStartDate || fecha === selectedEndDate;
+        }
+
+        function esFechaEnRango(fecha) {
+            if (!selectedStartDate || !selectedEndDate) return false;
+            return fecha > selectedStartDate && fecha < selectedEndDate;
+        }
+
+        // Funciones globales de la interfaz
         window.showTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -640,7 +776,6 @@
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
             
-            // Si cambio al calendario, actualizar la vista
             if (tabName === 'calendario') {
                 setTimeout(() => {
                     updateCalendarioDisplay();
@@ -648,19 +783,7 @@
             }
         };
 
-        window.toggleEstanciaDetails = function(index) {
-            const detalles = document.getElementById(`detalles-${index}`);
-            const chevron = document.querySelector(`#detalles-${index}`).parentElement.querySelector('.chevron');
-            
-            if (detalles.style.display === 'none') {
-                detalles.style.display = 'block';
-                chevron.textContent = '▲';
-            } else {
-                detalles.style.display = 'none';
-                chevron.textContent = '▼';
-            }
-        };
-
+        // Funciones del calendario
         window.selectFecha = function(fecha) {
             if (!esFechaDeViaje(fecha)) return;
             
@@ -678,14 +801,10 @@
         };
 
         function updateCalendarioDisplay() {
-            // Actualizar clases de los días
             document.querySelectorAll('.dia-clickeable').forEach(dia => {
                 const fecha = dia.getAttribute('data-fecha');
-                
-                // Remover clases de selección
                 dia.classList.remove('dia-seleccionado', 'dia-en-rango');
                 
-                // Agregar nuevas clases
                 if (esFechaSeleccionada(fecha)) {
                     dia.classList.add('dia-seleccionado');
                 } else if (esFechaEnRango(fecha)) {
@@ -693,7 +812,6 @@
                 }
             });
             
-            // Actualizar display de fechas
             const inicioDisplay = document.getElementById('fecha-inicio-display');
             const finDisplay = document.getElementById('fecha-fin-display');
             const btnCrear = document.getElementById('btn-crear-estancia');
@@ -723,6 +841,7 @@
             }
         };
 
+        // Funciones principales de gestión
         window.addEstancia = function() {
             openEstanciaModal();
         };
@@ -733,61 +852,177 @@
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
-                <div class="modal-content large">
+                <div class="modal-content calendario-integrado">
                     <h3>${estancia ? '✏️ Editar' : '➕ Nueva'} Estancia</h3>
+                    
+                    <div class="calendario-modal">
+                        <h4>📅 Selecciona las fechas</h4>
+                        <div class="mini-calendario">
+                            ${renderMiniCalendario(fechaInicio, fechaFin)}
+                        </div>
+                        <div class="fechas-selected">
+                            <span id="modal-fecha-inicio">${fechaInicio ? formatDateLong(fechaInicio) : 'Fecha inicio'}</span>
+                            <span>→</span>
+                            <span id="modal-fecha-fin">${fechaFin ? formatDateLong(fechaFin) : 'Fecha fin'}</span>
+                        </div>
+                    </div>
+                    
                     <form id="estanciaForm">
-                        <div class="form-section">
-                            <h4>📅 Fechas de la Estancia</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Fecha inicio:</label>
-                                    <input type="date" id="fechaInicio" value="${estancia?.fechaInicio || fechaInicio || ''}" min="2025-12-19" max="2026-01-07" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Fecha fin:</label>
-                                    <input type="date" id="fechaFin" value="${estancia?.fechaFin || fechaFin || ''}" min="2025-12-19" max="2026-01-07" required>
-                                </div>
+                        <div class="form-group">
+                            <label>🏙️ Destino/Ciudad:</label>
+                            <input type="text" id="destino" value="${estancia?.destino || ''}" placeholder="Ej: Zurich, Milan, Roma..." required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>📝 Notas (opcional):</label>
+                            <textarea id="notas" rows="2" placeholder="Información adicional sobre esta estancia...">${estancia?.notas || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Crear Estancia</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('estanciaForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const fechaInicioFinal = document.getElementById('modal-fecha-inicio').getAttribute('data-fecha') || fechaInicio;
+                const fechaFinFinal = document.getElementById('modal-fecha-fin').getAttribute('data-fecha') || fechaFin;
+                
+                if (!fechaInicioFinal || !fechaFinFinal) {
+                    alert('Por favor selecciona las fechas de la estancia');
+                    return;
+                }
+                
+                const nuevaEstancia = {
+                    fechaInicio: fechaInicioFinal,
+                    fechaFin: fechaFinFinal,
+                    destino: document.getElementById('destino').value,
+                    notas: document.getElementById('notas').value,
+                    hoteles: [],
+                    transportes: [],
+                    actividades: []
+                };
+                
+                if (!viajeData.estancias) viajeData.estancias = [];
+                
+                if (estancia) {
+                    // Mantener elementos existentes al editar
+                    nuevaEstancia.hoteles = estancia.hoteles || [];
+                    nuevaEstancia.transportes = estancia.transportes || [];
+                    nuevaEstancia.actividades = estancia.actividades || [];
+                    viajeData.estancias[estanciaIndex] = nuevaEstancia;
+                } else {
+                    viajeData.estancias.push(nuevaEstancia);
+                }
+                
+                selectedStartDate = null;
+                selectedEndDate = null;
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        function renderMiniCalendario(fechaInicio, fechaFin) {
+            // Implementación simplificada del mini calendario
+            return `
+                <div class="mini-meses">
+                    <div class="mes-mini">Dic 2025</div>
+                    <div class="mes-mini">Ene 2026</div>
+                </div>
+                <p class="calendario-instrucciones">
+                    ${fechaInicio && fechaFin ? 
+                        `Seleccionado: ${formatDateShort(fechaInicio)} - ${formatDateShort(fechaFin)}` : 
+                        'Ve al tab Calendario para seleccionar fechas visualmente'
+                    }
+                </p>
+            `;
+        }
+
+        // Funciones para gestionar elementos dentro de estancias
+        window.addHotelToEstancia = function(estanciaIndex) {
+            openHotelModal(estanciaIndex);
+        };
+
+        function openHotelModal(estanciaIndex, hotelIndex = null) {
+            const estancia = viajeData.estancias[estanciaIndex];
+            const hotel = hotelIndex !== null ? estancia.hoteles[hotelIndex] : null;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${hotel ? '✏️ Editar' : '➕ Nuevo'} Hotel - ${estancia.destino}</h3>
+                    <form id="hotelForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre del hotel:</label>
+                                <input type="text" id="nombre" value="${hotel?.nombre || ''}" placeholder="Ej: Holiday Inn Airport" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de habitación:</label>
+                                <select id="tipoHabitacion">
+                                    <option value="Estándar" ${hotel?.tipoHabitacion === 'Estándar' ? 'selected' : ''}>Estándar</option>
+                                    <option value="Doble" ${hotel?.tipoHabitacion === 'Doble' ? 'selected' : ''}>Doble</option>
+                                    <option value="Triple" ${hotel?.tipoHabitacion === 'Triple' ? 'selected' : ''}>Triple</option>
+                                    <option value="Familiar" ${hotel?.tipoHabitacion === 'Familiar' ? 'selected' : ''}>Familiar</option>
+                                    <option value="Suite" ${hotel?.tipoHabitacion === 'Suite' ? 'selected' : ''}>Suite</option>
+                                </select>
                             </div>
                         </div>
                         
-                        <div class="form-section">
-                            <h4>🏙️ Destino</h4>
+                        <div class="form-row">
                             <div class="form-group">
-                                <label>Ciudad/Destino:</label>
-                                <input type="text" id="destino" value="${estancia?.destino || ''}" placeholder="Ej: Zurich, St Moritz, Milan..." required>
+                                <label>Check-in:</label>
+                                <input type="date" id="fechaInicio" value="${hotel?.fechaInicio || estancia.fechaInicio}" min="${estancia.fechaInicio}" max="${estancia.fechaFin}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Check-out:</label>
+                                <input type="date" id="fechaFin" value="${hotel?.fechaFin || estancia.fechaFin}" min="${estancia.fechaInicio}" max="${estancia.fechaFin}" required>
                             </div>
                         </div>
                         
-                        <div class="form-section">
-                            <h4>🏨 Hospedaje</h4>
+                        <div class="form-row">
                             <div class="form-group">
-                                <label>Hotel y detalles:</label>
-                                <textarea id="hotel" rows="2" placeholder="Ej: Holiday Inn Airport Zurich - €120/noche, del 20 al 22 dic, desayuno incluido">${estancia?.hotel || ''}</textarea>
+                                <label>Cantidad habitaciones:</label>
+                                <input type="number" id="cantidadHabitaciones" value="${hotel?.cantidadHabitaciones || 1}" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Desayuno incluido:</label>
+                                <select id="desayunoIncluido">
+                                    <option value="true" ${hotel?.desayunoIncluido === true ? 'selected' : ''}>✅ Sí incluido</option>
+                                    <option value="false" ${hotel?.desayunoIncluido === false ? 'selected' : ''}>❌ No incluido</option>
+                                </select>
                             </div>
                         </div>
                         
-                        <div class="form-section">
-                            <h4>✈️ Transporte</h4>
+                        <div class="form-row">
                             <div class="form-group">
-                                <label>Transporte y detalles:</label>
-                                <textarea id="transporte" rows="2" placeholder="Ej: Tren a las 5:00pm, 20 de diciembre, €50 por persona, Zurich→Milan">${estancia?.transporte || ''}</textarea>
+                                <label>Moneda:</label>
+                                <select id="moneda" onchange="calcularConversionHotel()">
+                                    <option value="MXN" ${hotel?.moneda === 'MXN' ? 'selected' : ''}>🇲🇽 Pesos MXN</option>
+                                    <option value="USD" ${hotel?.moneda === 'USD' ? 'selected' : ''}>🇺🇸 Dólares USD</option>
+                                    <option value="EUR" ${hotel?.moneda === 'EUR' ? 'selected' : ''}>🇪🇺 Euros EUR</option>
+                                    <option value="CHF" ${hotel?.moneda === 'CHF' ? 'selected' : ''}>🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Costo total:</label>
+                                <input type="number" id="costo" value="${hotel?.costo || ''}" required onchange="calcularConversionHotel()">
+                                <div id="conversionPreview" class="conversion-preview"></div>
                             </div>
                         </div>
                         
-                        <div class="form-section">
-                            <h4>🎯 Actividades</h4>
-                            <div class="form-group">
-                                <label>Actividades planeadas:</label>
-                                <textarea id="actividades" rows="3" placeholder="Ej: Visita al Duomo (€15), Tour en gondola (€80), Museo de Arte, Cena en restaurante típico">${estancia?.actividades || ''}</textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h4>📝 Notas</h4>
-                            <div class="form-group">
-                                <label>Notas adicionales:</label>
-                                <textarea id="notas" rows="2" placeholder="Cualquier información adicional...">${estancia?.notas || ''}</textarea>
-                            </div>
+                        <div class="form-group">
+                            <label>Notas (opcional):</label>
+                            <textarea id="notas" rows="2" placeholder="WiFi gratis, piscina, etc.">${hotel?.notas || ''}</textarea>
                         </div>
                         
                         <div class="form-buttons">
@@ -800,30 +1035,41 @@
             
             document.body.appendChild(modal);
             
-            document.getElementById('estanciaForm').onsubmit = function(e) {
+            window.calcularConversionHotel = function() {
+                const costo = parseFloat(document.getElementById('costo').value) || 0;
+                const moneda = document.getElementById('moneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionPreview').innerHTML = 
+                    costo > 0 ? `≈ ${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            if (hotel) {
+                setTimeout(calcularConversionHotel, 100);
+            }
+            
+            document.getElementById('hotelForm').onsubmit = function(e) {
                 e.preventDefault();
                 
-                const nuevaEstancia = {
+                const nuevoHotel = {
+                    nombre: document.getElementById('nombre').value,
+                    tipoHabitacion: document.getElementById('tipoHabitacion').value,
                     fechaInicio: document.getElementById('fechaInicio').value,
                     fechaFin: document.getElementById('fechaFin').value,
-                    destino: document.getElementById('destino').value,
-                    hotel: document.getElementById('hotel').value,
-                    transporte: document.getElementById('transporte').value,
-                    actividades: document.getElementById('actividades').value,
+                    cantidadHabitaciones: parseInt(document.getElementById('cantidadHabitaciones').value),
+                    desayunoIncluido: document.getElementById('desayunoIncluido').value === 'true',
+                    moneda: document.getElementById('moneda').value,
+                    costo: parseFloat(document.getElementById('costo').value),
                     notas: document.getElementById('notas').value
                 };
                 
-                if (!viajeData.estancias) viajeData.estancias = [];
+                if (!estancia.hoteles) estancia.hoteles = [];
                 
-                if (estancia) {
-                    viajeData.estancias[estanciaIndex] = nuevaEstancia;
+                if (hotel) {
+                    estancia.hoteles[hotelIndex] = nuevoHotel;
                 } else {
-                    viajeData.estancias.push(nuevaEstancia);
+                    estancia.hoteles.push(nuevoHotel);
                 }
-                
-                // Limpiar selección del calendario
-                selectedStartDate = null;
-                selectedEndDate = null;
                 
                 saveData('viajeData', viajeData);
                 closeModal();
@@ -831,40 +1077,335 @@
             };
         }
 
+        // Funciones similares para transportes y actividades...
+        window.addTransporteToEstancia = function(estanciaIndex) {
+            openTransporteModal(estanciaIndex);
+        };
+
+        function openTransporteModal(estanciaIndex, transporteIndex = null) {
+            const estancia = viajeData.estancias[estanciaIndex];
+            const transporte = transporteIndex !== null ? estancia.transportes[transporteIndex] : null;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${transporte ? '✏️ Editar' : '➕ Nuevo'} Transporte - ${estancia.destino}</h3>
+                    <form id="transporteForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo de transporte:</label>
+                                <select id="tipo" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Avión" ${transporte?.tipo === 'Avión' ? 'selected' : ''}>✈️ Avión</option>
+                                    <option value="Tren" ${transporte?.tipo === 'Tren' ? 'selected' : ''}>🚂 Tren</option>
+                                    <option value="Autobús" ${transporte?.tipo === 'Autobús' ? 'selected' : ''}>🚌 Autobús</option>
+                                    <option value="Auto" ${transporte?.tipo === 'Auto' ? 'selected' : ''}>🚗 Auto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha:</label>
+                                <input type="date" id="fecha" value="${transporte?.fecha || estancia.fechaInicio}" min="${estancia.fechaInicio}" max="${estancia.fechaFin}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Origen:</label>
+                                <input type="text" id="origen" value="${transporte?.origen || ''}" placeholder="Ciudad de origen" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Destino:</label>
+                                <input type="text" id="destino" value="${transporte?.destino || estancia.destino}" placeholder="Ciudad de destino" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Hora (opcional):</label>
+                                <input type="time" id="hora" value="${transporte?.hora || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="moneda" onchange="calcularConversionTransporte()">
+                                    <option value="MXN" ${transporte?.moneda === 'MXN' ? 'selected' : ''}>🇲🇽 Pesos MXN</option>
+                                    <option value="USD" ${transporte?.moneda === 'USD' ? 'selected' : ''}>🇺🇸 Dólares USD</option>
+                                    <option value="EUR" ${transporte?.moneda === 'EUR' ? 'selected' : ''}>🇪🇺 Euros EUR</option>
+                                    <option value="CHF" ${transporte?.moneda === 'CHF' ? 'selected' : ''}>🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo (para 4 personas):</label>
+                            <input type="number" id="costo" value="${transporte?.costo || ''}" required onchange="calcularConversionTransporte()">
+                            <div id="conversionPreview" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notas (opcional):</label>
+                            <textarea id="notas" rows="2" placeholder="Detalles adicionales">${transporte?.notas || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.calcularConversionTransporte = function() {
+                const costo = parseFloat(document.getElementById('costo').value) || 0;
+                const moneda = document.getElementById('moneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionPreview').innerHTML = 
+                    costo > 0 ? `≈ ${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            if (transporte) {
+                setTimeout(calcularConversionTransporte, 100);
+            }
+            
+            document.getElementById('transporteForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevoTransporte = {
+                    tipo: document.getElementById('tipo').value,
+                    fecha: document.getElementById('fecha').value,
+                    origen: document.getElementById('origen').value,
+                    destino: document.getElementById('destino').value,
+                    hora: document.getElementById('hora').value,
+                    moneda: document.getElementById('moneda').value,
+                    costo: parseFloat(document.getElementById('costo').value),
+                    notas: document.getElementById('notas').value
+                };
+                
+                if (!estancia.transportes) estancia.transportes = [];
+                
+                if (transporte) {
+                    estancia.transportes[transporteIndex] = nuevoTransporte;
+                } else {
+                    estancia.transportes.push(nuevoTransporte);
+                }
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        window.addActividadToEstancia = function(estanciaIndex) {
+            openActividadModal(estanciaIndex);
+        };
+
+        function openActividadModal(estanciaIndex, actividadIndex = null) {
+            const estancia = viajeData.estancias[estanciaIndex];
+            const actividad = actividadIndex !== null ? estancia.actividades[actividadIndex] : null;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${actividad ? '✏️ Editar' : '➕ Nueva'} Actividad - ${estancia.destino}</h3>
+                    <form id="actividadForm">
+                        <div class="form-group">
+                            <label>Nombre de la actividad:</label>
+                            <input type="text" id="nombre" value="${actividad?.nombre || ''}" placeholder="Ej: Visita al Duomo, Tour en gondola" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Descripción (opcional):</label>
+                            <textarea id="descripcion" rows="2" placeholder="Detalles de la actividad">${actividad?.descripcion || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Duración estimada:</label>
+                                <input type="text" id="duracion" value="${actividad?.duracion || ''}" placeholder="Ej: 2 horas, Medio día">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="moneda" onchange="calcularConversionActividad()">
+                                    <option value="MXN" ${actividad?.moneda === 'MXN' ? 'selected' : ''}>🇲🇽 Pesos MXN</option>
+                                    <option value="USD" ${actividad?.moneda === 'USD' ? 'selected' : ''}>🇺🇸 Dólares USD</option>
+                                    <option value="EUR" ${actividad?.moneda === 'EUR' ? 'selected' : ''}>🇪🇺 Euros EUR</option>
+                                    <option value="CHF" ${actividad?.moneda === 'CHF' ? 'selected' : ''}>🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo (opcional, para 4 personas):</label>
+                            <input type="number" id="costo" value="${actividad?.costo || 0}" min="0" onchange="calcularConversionActividad()">
+                            <div id="conversionPreview" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.calcularConversionActividad = function() {
+                const costo = parseFloat(document.getElementById('costo').value) || 0;
+                const moneda = document.getElementById('moneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionPreview').innerHTML = 
+                    costo > 0 ? `≈ ${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            if (actividad) {
+                setTimeout(calcularConversionActividad, 100);
+            }
+            
+            document.getElementById('actividadForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevaActividad = {
+                    nombre: document.getElementById('nombre').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    duracion: document.getElementById('duracion').value,
+                    moneda: document.getElementById('moneda').value,
+                    costo: parseFloat(document.getElementById('costo').value) || 0
+                };
+                
+                if (!estancia.actividades) estancia.actividades = [];
+                
+                if (actividad) {
+                    estancia.actividades[actividadIndex] = nuevaActividad;
+                } else {
+                    estancia.actividades.push(nuevaActividad);
+                }
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        // Funciones de edición en estancias
         window.editEstancia = function(index) {
             openEstanciaModal(index);
         };
 
         window.deleteEstancia = function(index) {
-            if (confirm('¿Eliminar esta estancia?')) {
+            if (confirm('¿Eliminar esta estancia? Se eliminarán también todos sus hoteles, transportes y actividades.')) {
                 viajeData.estancias.splice(index, 1);
                 saveData('viajeData', viajeData);
                 renderApp();
             }
         };
 
-        // Las demás funciones (transportes, hoteles, actividades, presupuesto) siguen igual...
-        // [Aquí incluiría todas las funciones existentes pero por brevedad las omito]
+        // Funciones de edición de hoteles
+        window.editHotelInEstancia = function(estanciaIndex, hotelIndex) {
+            openHotelModal(estanciaIndex, hotelIndex);
+        };
+
+        window.deleteHotelFromEstancia = function(estanciaIndex, hotelIndex) {
+            if (confirm('¿Eliminar este hotel?')) {
+                viajeData.estancias[estanciaIndex].hoteles.splice(hotelIndex, 1);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        // Funciones de edición de transportes
+        window.editTransporteInEstancia = function(estanciaIndex, transporteIndex) {
+            openTransporteModal(estanciaIndex, transporteIndex);
+        };
+
+        window.deleteTransporteFromEstancia = function(estanciaIndex, transporteIndex) {
+            if (confirm('¿Eliminar este transporte?')) {
+                viajeData.estancias[estanciaIndex].transportes.splice(transporteIndex, 1);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        // Funciones de edición de actividades
+        window.editActividadInEstancia = function(estanciaIndex, actividadIndex) {
+            openActividadModal(estanciaIndex, actividadIndex);
+        };
+
+        window.deleteActividadFromEstancia = function(estanciaIndex, actividadIndex) {
+            if (confirm('¿Eliminar esta actividad?')) {
+                viajeData.estancias[estanciaIndex].actividades.splice(actividadIndex, 1);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        // Funciones de presupuesto
+        window.addIngreso = function() {
+            openIngresoModal();
+        };
+
+        function openIngresoModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>💰 Agregar Dinero Disponible</h3>
+                    <form id="ingresoForm">
+                        <div class="form-group">
+                            <label>Descripción:</label>
+                            <input type="text" id="descripcion" placeholder="Ej: Presupuesto familiar, Ahorros del viaje" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad (en pesos mexicanos):</label>
+                            <input type="number" id="monto" placeholder="0" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('ingresoForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const ingreso = {
+                    id: Date.now().toString(),
+                    descripcion: document.getElementById('descripcion').value,
+                    monto: parseInt(document.getElementById('monto').value)
+                };
+                
+                if (!viajeData.presupuesto.ingresos) {
+                    viajeData.presupuesto.ingresos = [];
+                }
+                
+                viajeData.presupuesto.ingresos.push(ingreso);
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        window.deleteIngreso = function(id) {
+            if (confirm('¿Eliminar este ingreso?')) {
+                viajeData.presupuesto.ingresos = viajeData.presupuesto.ingresos.filter(i => i.id !== id);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
 
         window.closeModal = function() {
             const modal = document.querySelector('.modal');
             if (modal) modal.remove();
         };
-
-        // Placeholder para funciones que mantengo igual
-        window.addTransporte = function() { alert('Implementando...'); };
-        window.addHotel = function() { alert('Implementando...'); };
-        window.addActividad = function() { alert('Implementando...'); };
-        window.addIngreso = function() { alert('Implementando...'); };
-        
-        // Funciones de eliminación y edición placeholder
-        window.editTransporte = function(id) { alert('Implementando...'); };
-        window.deleteTransporte = function(id) { alert('Implementando...'); };
-        window.editHotel = function(id) { alert('Implementando...'); };
-        window.deleteHotel = function(id) { alert('Implementando...'); };
-        window.editActividad = function(id) { alert('Implementando...'); };
-        window.deleteActividad = function(id) { alert('Implementando...'); };
-        window.deleteIngreso = function(id) { alert('Implementando...'); };
     </script>
     
     <style>
@@ -955,7 +1496,7 @@
             display: block;
         }
         
-        /* Itinerario compacto */
+        /* Itinerario nuevo diseño */
         .itinerario-container {
             padding: 30px;
         }
@@ -990,141 +1531,233 @@
             transform: translateY(-1px);
         }
         
-        .estancias-compactas {
+        .btn-primary:disabled {
+            background: #e2e8f0;
+            color: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .estancias-lista {
             display: grid;
-            gap: 16px;
+            gap: 24px;
         }
         
-        .estancia-compacta {
+        .estancia-card-completa {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
         }
         
-        .estancia-compacta:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transform: translateY(-1px);
-        }
-        
-        .estancia-resumen {
+        .estancia-header-main {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
-            align-items: center;
-            padding: 20px;
-            gap: 20px;
+            justify-content: space-between;
+            align-items: flex-start;
         }
         
-        .estancia-fechas-comp {
-            min-width: 200px;
+        .estancia-info-principal h4 {
+            font-size: 18px;
+            color: #2d3748;
+            margin-bottom: 6px;
         }
         
-        .estancia-fechas-comp h4 {
+        .estancia-info-principal h3 {
+            font-size: 24px;
             color: #1a202c;
-            font-size: 16px;
-            margin-bottom: 4px;
+            margin-top: 8px;
         }
         
-        .duracion-comp {
-            background: #edf2f7;
-            color: #4a5568;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
+        .duracion {
+            background: #e6fffa;
+            color: #285e61;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 500;
         }
         
-        .estancia-destino-comp {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .destino {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2d3748;
-        }
-        
-        .chevron {
-            color: #a0aec0;
-            font-size: 12px;
-            transition: transform 0.2s;
-        }
-        
-        .estancia-acciones-comp {
+        .estancia-acciones-main {
             display: flex;
             gap: 8px;
         }
         
-        .btn-small {
-            padding: 6px 12px;
+        .btn-edit, .btn-delete {
+            padding: 8px 16px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
             font-weight: 500;
             transition: all 0.2s;
         }
         
-        .btn-small:not(.btn-danger) {
-            background: #e2e8f0;
-            color: #4a5568;
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
         }
         
-        .btn-small:hover:not(.btn-danger) {
-            background: #cbd5e0;
+        .btn-edit:hover {
+            background: #2563eb;
         }
         
-        .btn-small.btn-danger {
-            background: #fed7d7;
-            color: #c53030;
+        .btn-delete {
+            background: #ef4444;
+            color: white;
         }
         
-        .btn-small.btn-danger:hover {
-            background: #feb2b2;
+        .btn-delete:hover {
+            background: #dc2626;
         }
         
-        .estancia-detalles-comp {
-            border-top: 1px solid #e2e8f0;
-            padding: 20px;
-            background: #f8fafc;
+        .categoria-section {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
         }
         
-        .detalles-grid {
-            display: grid;
-            gap: 16px;
+        .categoria-section:last-of-type {
+            border-bottom: none;
         }
         
-        .detalle-item-comp {
+        .categoria-header {
             display: flex;
-            gap: 12px;
-            align-items: flex-start;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
         
-        .detalle-item-comp .icon {
+        .categoria-header h5 {
+            color: #2d3748;
             font-size: 16px;
-            margin-top: 2px;
+            font-weight: 600;
         }
         
-        .detalle-content {
+        .btn-small-add {
+            background: #e6fffa;
+            color: #2c7a7b;
+            border: 1px solid #81e6d9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-small-add:hover {
+            background: #b2f5ea;
+        }
+        
+        .elementos-mini {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .elemento-mini {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: all 0.2s;
+        }
+        
+        .elemento-mini:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e0;
+        }
+        
+        .elemento-mini-info {
             flex: 1;
         }
         
-        .detalle-content strong {
-            color: #2d3748;
+        .elemento-mini-info strong {
+            display: block;
+            color: #1a202c;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .elemento-mini-info span {
+            display: block;
+            color: #4a5568;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        
+        .precio-mini {
+            color: #059669 !important;
+            font-weight: 600;
+        }
+        
+        .desayuno-mini.incluido {
+            color: #38a169 !important;
+        }
+        
+        .desayuno-mini.no-incluido {
+            color: #e53e3e !important;
+        }
+        
+        .gratis {
+            color: #38a169 !important;
+            font-weight: 500;
+        }
+        
+        .elemento-mini-acciones {
+            display: flex;
+            gap: 4px;
+            margin-left: 12px;
+        }
+        
+        .btn-tiny {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+        
+        .btn-tiny:hover {
+            background: #f3f4f6;
+        }
+        
+        .btn-tiny.btn-danger {
+            border-color: #fed7d7;
+            color: #c53030;
+            background: #fed7d7;
+        }
+        
+        .btn-tiny.btn-danger:hover {
+            background: #feb2b2;
+        }
+        
+        .no-elementos {
+            color: #a0aec0;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
             font-size: 14px;
         }
         
-        .detalle-content p {
-            color: #4a5568;
-            margin-top: 4px;
-            white-space: pre-wrap;
+        .estancia-total {
+            background: #f0fff4;
+            padding: 16px 24px;
+            border-top: 1px solid #c6f6d5;
+            color: #22543d;
+            text-align: right;
+            font-size: 16px;
         }
         
-        /* Calendario moderno */
+        /* Calendario (mantiene estilos existentes) */
         .calendario-container {
             padding: 30px;
         }
@@ -1321,36 +1954,355 @@
             font-weight: 500;
         }
         
-        .btn-primary:disabled {
-            background: #e2e8f0;
-            color: #a0aec0;
-            cursor: not-allowed;
-            transform: none;
+        /* Tabs de gestión */
+        .section-container {
+            padding: 30px;
         }
         
-        /* Estados vacíos y demás estilos existentes */
-        .estado-vacio {
+        .section-header {
+            margin-bottom: 30px;
+        }
+        
+        .section-header h3 {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        
+        .section-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .elementos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .elemento-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .elemento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .elemento-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .tipo-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .tipo-badge.avión {
+            background: #3b82f6;
+        }
+        
+        .tipo-badge.tren {
+            background: #10b981;
+        }
+        
+        .tipo-badge.autobús {
+            background: #f59e0b;
+        }
+        
+        .tipo-badge.auto {
+            background: #8b5cf6;
+        }
+        
+        .precios {
+            text-align: right;
+        }
+        
+        .precio-original {
+            font-size: 16px;
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        .precio-mxn {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        .precio-gratis {
+            color: #38a169;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .elemento-contenido h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+        
+        .detalles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #718096;
+        }
+        
+        .notas, .descripcion {
+            background: #f7fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 12px;
+        }
+        
+        .elemento-acciones {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .btn-small:not(.btn-danger) {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-small.btn-danger {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .empty-message {
+            grid-column: 1 / -1;
             text-align: center;
-            padding: 60px 30px;
+            padding: 40px;
+            color: #718096;
             background: white;
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        .icono-vacio {
-            font-size: 48px;
-            margin-bottom: 16px;
+        .empty-message small {
+            display: block;
+            margin-top: 8px;
+            color: #a0aec0;
         }
         
-        .estado-vacio h3 {
-            font-size: 20px;
+        /* Hoteles específicos */
+        .hotel-info h4 {
+            margin-bottom: 4px;
+        }
+        
+        .ciudad, .fechas {
+            color: #718096;
+            font-size: 14px;
+            display: block;
+        }
+        
+        .desayuno.incluido {
+            color: #38a169;
+        }
+        
+        .desayuno.no-incluido {
+            color: #e53e3e;
+        }
+        
+        /* Actividades específicas */
+        .actividad-info h4 {
+            margin-bottom: 4px;
+        }
+        
+        /* Presupuesto */
+        .presupuesto-resumen {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .balance-card, .resumen-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .balance-card.positivo {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        
+        .balance-card.negativo {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+        }
+        
+        .balance-card h4, .resumen-card h4 {
             margin-bottom: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .monto {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .monto.positivo {
+            color: #38a169;
+        }
+        
+        .monto.negativo {
+            color: #e53e3e;
+        }
+        
+        .balance-card p, .resumen-card p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .presupuesto-detalles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .ingresos-seccion h4, .gastos-seccion h4 {
+            margin-bottom: 20px;
+            color: #1a202c;
+            font-size: 18px;
+        }
+        
+        .lista-ingresos {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .ingreso-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .ingreso-item:last-child {
+            border-bottom: none;
+        }
+        
+        .descripcion {
+            font-weight: 500;
             color: #1a202c;
         }
         
-        .estado-vacio p {
-            color: #718096;
-            margin-bottom: 24px;
+        .ingreso-item .monto {
+            color: #38a169;
+            font-size: 16px;
+        }
+        
+        .gastos-breakdown {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .gasto-categoria {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .gasto-categoria:last-child {
+            border-bottom: none;
+        }
+        
+        .gasto-categoria .icono {
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .gasto-categoria .nombre {
+            flex: 1;
+            font-weight: 500;
+            color: #1a202c;
+        }
+        
+        .gasto-categoria .monto {
+            color: #e53e3e;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .presupuesto-por-estancia {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .presupuesto-por-estancia h4 {
+            margin-bottom: 20px;
+            color: #1a202c;
+            font-size: 18px;
+        }
+        
+        .estancias-costos {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .estancia-costo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+        }
+        
+        .estancia-nombre {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .estancia-fechas {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .estancia-monto {
+            color: #dc2626;
+            font-weight: 600;
         }
         
         /* Modal mejorado */
@@ -1392,8 +2344,8 @@
             }
         }
         
-        .modal-content.large {
-            max-width: 800px;
+        .modal-content.calendario-integrado {
+            max-width: 700px;
         }
         
         .modal-content h3 {
@@ -1402,19 +2354,55 @@
             font-size: 20px;
         }
         
-        .form-section {
-            margin-bottom: 24px;
-            padding: 20px;
+        .calendario-modal {
             background: #f7fafc;
-            border-radius: 8px;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
         }
         
-        .form-section h4 {
+        .calendario-modal h4 {
+            color: #2d3748;
             margin-bottom: 16px;
-            color: #1a202c;
+        }
+        
+        .mini-calendario {
+            margin-bottom: 16px;
+        }
+        
+        .mini-meses {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 12px;
+        }
+        
+        .mes-mini {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .calendario-instrucciones {
+            color: #4a5568;
+            font-size: 14px;
+        }
+        
+        .fechas-selected {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
             font-size: 16px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .fechas-selected span {
+            color: #2d3748;
         }
         
         .form-group {
@@ -1455,6 +2443,16 @@
             min-height: 60px;
         }
         
+        .conversion-preview {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f0fdf4;
+            border-radius: 6px;
+            color: #166534;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
         .form-buttons {
             display: flex;
             gap: 12px;
@@ -1462,6 +2460,30 @@
             margin-top: 24px;
             padding-top: 24px;
             border-top: 1px solid #e2e8f0;
+        }
+        
+        .estado-vacio {
+            text-align: center;
+            padding: 60px 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .icono-vacio {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .estado-vacio h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+        
+        .estado-vacio p {
+            color: #718096;
+            margin-bottom: 24px;
         }
         
         /* Responsive */
@@ -1479,7 +2501,7 @@
                 font-size: 13px;
             }
             
-            .itinerario-container, .calendario-container {
+            .itinerario-container, .calendario-container, .section-container {
                 padding: 20px;
             }
             
@@ -1498,14 +2520,22 @@
                 justify-content: center;
             }
             
-            .estancia-resumen {
+            .estancia-header-main {
                 flex-direction: column;
+                gap: 16px;
                 align-items: flex-start;
-                gap: 12px;
             }
             
-            .estancia-destino-comp {
-                width: 100%;
+            .elementos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .presupuesto-resumen {
+                grid-template-columns: 1fr;
+            }
+            
+            .presupuesto-detalles {
+                grid-template-columns: 1fr;
             }
             
             .form-row {
@@ -1526,16 +2556,20 @@
                 padding: 16px;
             }
             
-            .form-section {
-                padding: 16px;
-            }
-            
             .leyenda {
                 gap: 12px;
             }
             
             .leyenda-item {
                 font-size: 12px;
+            }
+            
+            .categoria-section {
+                padding: 16px 20px;
+            }
+            
+            .estancia-header-main {
+                padding: 20px;
             }
         }
     </style>
