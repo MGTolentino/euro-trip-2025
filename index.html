@@ -31,21 +31,21 @@
             console.error('Error Firebase:', error);
         }
 
-        // Estructura nueva y limpia
+        // Tasas de conversión (actualizar periódicamente)
+        const exchangeRates = {
+            USD: 20.0,  // 1 USD = 20 MXN
+            EUR: 21.5,  // 1 EUR = 21.5 MXN
+            CHF: 22.0,  // 1 CHF = 22 MXN
+            MXN: 1.0    // Base
+        };
+
         const initialData = {
-            // Fechas fijas del viaje
-            fechaInicio: "2024-12-20", // Llegada a Zurich
-            fechaFin: "2025-01-06",   // Salida a Madrid
-            
-            // Períodos del itinerario (lo principal)
-            periodos: [],
-            
-            // Catálogos para seleccionar
+            fechaInicio: "2024-12-20",
+            fechaFin: "2025-01-06",
+            estancias: [],
             transportes: [],
             hoteles: [],
             actividades: [],
-            
-            // Presupuesto
             presupuesto: {
                 ingresos: [],
                 totalDisponible: 0
@@ -90,7 +90,7 @@
         function renderApp() {
             const app = document.getElementById('app');
             const totalDias = calcularDiasViaje();
-            const totalPeriodos = (viajeData.periodos || []).length;
+            const totalEstancias = (viajeData.estancias || []).length;
             const totalCosto = calcularCostoTotal();
             
             app.innerHTML = `
@@ -99,7 +99,7 @@
                     <div class="info-viaje">
                         <span class="fecha-viaje">📅 20 Dic 2024 - 6 Ene 2025</span>
                         <span class="duracion">${totalDias} días en Europa</span>
-                        <span class="total-costo">💰 $${totalCosto.toLocaleString()}</span>
+                        <span class="total-costo">💰 $${totalCosto.toLocaleString()} MXN</span>
                         <span class="status ${isFirebaseConnected ? 'online' : 'offline'}">
                             ${isFirebaseConnected ? '🟢 Conectado' : '🔴 Offline'}
                         </span>
@@ -141,54 +141,53 @@
                 <div class="itinerario-container">
                     <div class="itinerario-header">
                         <h3>📋 Planificación del Viaje</h3>
-                        <button onclick="addPeriodo()" class="btn-primary">➕ Agregar Período</button>
+                        <button onclick="addEstancia()" class="btn-primary">➕ Agregar Estancia</button>
                     </div>
                     
-                    ${(viajeData.periodos || []).length > 0 ? `
-                        <div class="periodos-lista">
-                            ${(viajeData.periodos || []).map((periodo, index) => `
-                                <div class="periodo-card">
-                                    <div class="periodo-header">
-                                        <div class="periodo-fechas">
-                                            <h4>${formatDate(periodo.fechaInicio)} - ${formatDate(periodo.fechaFin)}</h4>
-                                            <span class="duracion">${calcularDias(periodo.fechaInicio, periodo.fechaFin)} días</span>
+                    <div class="calendario-viaje">
+                        ${renderCalendario()}
+                    </div>
+                    
+                    ${(viajeData.estancias || []).length > 0 ? `
+                        <div class="estancias-lista">
+                            ${(viajeData.estancias || []).map((estancia, index) => `
+                                <div class="estancia-card">
+                                    <div class="estancia-header">
+                                        <div class="estancia-fechas">
+                                            <h4>${formatDateLong(estancia.fechaInicio)} - ${formatDateLong(estancia.fechaFin)}</h4>
+                                            <span class="duracion">${calcularDias(estancia.fechaInicio, estancia.fechaFin)} días</span>
                                         </div>
-                                        <div class="periodo-acciones">
-                                            <button onclick="editPeriodo(${index})" class="btn-edit">✏️</button>
-                                            <button onclick="deletePeriodo(${index})" class="btn-delete">🗑️</button>
+                                        <div class="estancia-acciones">
+                                            <button onclick="editEstancia(${index})" class="btn-edit">✏️ Editar</button>
+                                            <button onclick="deleteEstancia(${index})" class="btn-delete">🗑️ Eliminar</button>
                                         </div>
                                     </div>
                                     
-                                    <div class="periodo-detalles">
-                                        <div class="detalle-item">
+                                    <div class="estancia-detalles">
+                                        <div class="detalle-grupo">
                                             <span class="label">🏙️ Destino:</span>
-                                            <span class="value">${periodo.destino || 'No definido'}</span>
+                                            <span class="value">${estancia.destino || 'No definido'}</span>
                                         </div>
                                         
-                                        <div class="detalle-item">
+                                        <div class="detalle-grupo">
                                             <span class="label">🏨 Hospedaje:</span>
-                                            <span class="value">${periodo.hotelId ? getHotelNombre(periodo.hotelId) : 'No definido'}</span>
+                                            <span class="value">${estancia.hotel || 'No definido'}</span>
                                         </div>
                                         
-                                        <div class="detalle-item">
+                                        <div class="detalle-grupo">
                                             <span class="label">✈️ Transporte:</span>
-                                            <span class="value">${periodo.transporteId ? getTransporteDescripcion(periodo.transporteId) : 'No definido'}</span>
+                                            <span class="value">${estancia.transporte || 'No definido'}</span>
                                         </div>
                                         
-                                        <div class="detalle-item">
+                                        <div class="detalle-grupo">
                                             <span class="label">🎯 Actividades:</span>
-                                            <span class="value">
-                                                ${periodo.actividadesIds && periodo.actividadesIds.length > 0 ? 
-                                                    periodo.actividadesIds.map(id => getActividadNombre(id)).join(', ') : 
-                                                    'No definidas'
-                                                }
-                                            </span>
+                                            <span class="value">${estancia.actividades || 'No definidas'}</span>
                                         </div>
                                         
-                                        ${periodo.notas ? `
-                                            <div class="detalle-item">
+                                        ${estancia.notas ? `
+                                            <div class="detalle-grupo">
                                                 <span class="label">📝 Notas:</span>
-                                                <span class="value">${periodo.notas}</span>
+                                                <span class="value">${estancia.notas}</span>
                                             </div>
                                         ` : ''}
                                     </div>
@@ -199,12 +198,82 @@
                         <div class="estado-vacio">
                             <div class="icono-vacio">📅</div>
                             <h3>¡Comienza a planificar tu viaje!</h3>
-                            <p>Agrega períodos a tu itinerario para organizar tu aventura por Europa</p>
-                            <button onclick="addPeriodo()" class="btn-primary">➕ Crear primer período</button>
+                            <p>Agrega estancias a tu itinerario para organizar tu aventura por Europa</p>
+                            <button onclick="addEstancia()" class="btn-primary">➕ Crear primera estancia</button>
                         </div>
                     `}
                 </div>
             `;
+        }
+
+        function renderCalendario() {
+            const fechaInicio = new Date("2024-12-20");
+            const fechaFin = new Date("2025-01-06");
+            
+            return `
+                <div class="calendario">
+                    <div class="calendario-header">
+                        <h4>📅 Calendario del Viaje</h4>
+                        <span class="calendario-info">20 Dic 2024 - 6 Ene 2025</span>
+                    </div>
+                    <div class="calendario-grid">
+                        ${renderMesCalendario("2024-12", "Diciembre 2024")}
+                        ${renderMesCalendario("2025-01", "Enero 2025")}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMesCalendario(mesAno, titulo) {
+            const [ano, mes] = mesAno.split('-').map(Number);
+            const primerDia = new Date(ano, mes - 1, 1);
+            const ultimoDia = new Date(ano, mes, 0);
+            const diasEnMes = ultimoDia.getDate();
+            const diaSemanaInicio = primerDia.getDay();
+            
+            let calendario = `
+                <div class="mes-calendario">
+                    <h5>${titulo}</h5>
+                    <div class="dias-semana">
+                        <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+                    </div>
+                    <div class="dias-grid">
+            `;
+            
+            // Espacios en blanco antes del primer día
+            for (let i = 0; i < diaSemanaInicio; i++) {
+                calendario += '<span class="dia-vacio"></span>';
+            }
+            
+            // Días del mes
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const fecha = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                const esViaje = esFechaDeViaje(fecha);
+                const tieneEstancia = tieneEstanciaEnFecha(fecha);
+                
+                calendario += `
+                    <span class="dia ${esViaje ? 'dia-viaje' : ''} ${tieneEstancia ? 'dia-ocupado' : ''}">
+                        ${dia}
+                    </span>
+                `;
+            }
+            
+            calendario += `
+                    </div>
+                </div>
+            `;
+            
+            return calendario;
+        }
+
+        function esFechaDeViaje(fecha) {
+            return fecha >= "2024-12-20" && fecha <= "2025-01-06";
+        }
+
+        function tieneEstanciaEnFecha(fecha) {
+            return (viajeData.estancias || []).some(estancia => 
+                fecha >= estancia.fechaInicio && fecha <= estancia.fechaFin
+            );
         }
 
         function renderTransportes() {
@@ -222,13 +291,16 @@
                                     <div class="tipo-badge ${transporte.tipo.toLowerCase()}">
                                         ${getTransporteIcon(transporte.tipo)} ${transporte.tipo}
                                     </div>
-                                    <div class="costo">$${transporte.costo.toLocaleString()}</div>
+                                    <div class="precios">
+                                        <div class="precio-original">${transporte.moneda} ${transporte.costoOriginal.toLocaleString()}</div>
+                                        <div class="precio-mxn">$${convertirAMXN(transporte.costoOriginal, transporte.moneda).toLocaleString()} MXN</div>
+                                    </div>
                                 </div>
                                 
                                 <div class="elemento-contenido">
                                     <h4>${transporte.origen} → ${transporte.destino}</h4>
                                     <div class="detalles">
-                                        ${transporte.fecha ? `<span>📅 ${formatDate(transporte.fecha)}</span>` : ''}
+                                        ${transporte.fecha ? `<span>📅 ${formatDateLong(transporte.fecha)}</span>` : ''}
                                         ${transporte.hora ? `<span>🕐 ${transporte.hora}</span>` : ''}
                                         <span>👥 Para 4 personas</span>
                                     </div>
@@ -236,8 +308,8 @@
                                 </div>
                                 
                                 <div class="elemento-acciones">
-                                    <button onclick="editTransporte('${transporte.id}')" class="btn-small">✏️</button>
-                                    <button onclick="deleteTransporte('${transporte.id}')" class="btn-small btn-danger">🗑️</button>
+                                    <button onclick="editTransporte('${transporte.id}')" class="btn-small">✏️ Editar</button>
+                                    <button onclick="deleteTransporte('${transporte.id}')" class="btn-small btn-danger">🗑️ Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -262,29 +334,31 @@
                         ${(viajeData.hoteles || []).map(hotel => `
                             <div class="elemento-card hotel-card">
                                 <div class="elemento-header">
-                                    <div class="hotel-nombre">
+                                    <div class="hotel-info">
                                         <h4>${hotel.nombre}</h4>
                                         <span class="ciudad">${hotel.ciudad}</span>
+                                        <span class="fechas">${formatDateShort(hotel.fechaInicio)} - ${formatDateShort(hotel.fechaFin)}</span>
                                     </div>
-                                    <div class="costo">$${hotel.costoTotal.toLocaleString()}</div>
+                                    <div class="precios">
+                                        <div class="precio-original">${hotel.moneda} ${hotel.costoOriginal.toLocaleString()}</div>
+                                        <div class="precio-mxn">$${convertirAMXN(hotel.costoOriginal, hotel.moneda).toLocaleString()} MXN</div>
+                                    </div>
                                 </div>
                                 
                                 <div class="elemento-contenido">
                                     <div class="detalles">
-                                        <span>🛏️ ${hotel.tipoHabitacion}</span>
-                                        <span>📦 ${hotel.cantidadHabitaciones} hab.</span>
+                                        <span>🛏️ ${hotel.tipoHabitacion || 'Habitación estándar'}</span>
+                                        <span>📦 ${hotel.cantidadHabitaciones || 1} habitación(es)</span>
                                         <span class="desayuno ${hotel.desayunoIncluido ? 'incluido' : 'no-incluido'}">
                                             🍳 ${hotel.desayunoIncluido ? 'Con desayuno' : 'Sin desayuno'}
                                         </span>
                                     </div>
-                                    <div class="precio-detalle">
-                                        $${hotel.costoPorNoche.toLocaleString()} por noche
-                                    </div>
+                                    ${hotel.notas ? `<p class="notas">${hotel.notas}</p>` : ''}
                                 </div>
                                 
                                 <div class="elemento-acciones">
-                                    <button onclick="editHotel('${hotel.id}')" class="btn-small">✏️</button>
-                                    <button onclick="deleteHotel('${hotel.id}')" class="btn-small btn-danger">🗑️</button>
+                                    <button onclick="editHotel('${hotel.id}')" class="btn-small">✏️ Editar</button>
+                                    <button onclick="deleteHotel('${hotel.id}')" class="btn-small btn-danger">🗑️ Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -313,7 +387,12 @@
                                         <h4>${actividad.nombre}</h4>
                                         <span class="ciudad">${actividad.ciudad}</span>
                                     </div>
-                                    ${actividad.costo ? `<div class="costo">$${actividad.costo.toLocaleString()}</div>` : ''}
+                                    ${actividad.costo ? `
+                                        <div class="precios">
+                                            <div class="precio-original">${actividad.moneda} ${actividad.costoOriginal.toLocaleString()}</div>
+                                            <div class="precio-mxn">$${convertirAMXN(actividad.costoOriginal, actividad.moneda).toLocaleString()} MXN</div>
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 
                                 <div class="elemento-contenido">
@@ -325,8 +404,8 @@
                                 </div>
                                 
                                 <div class="elemento-acciones">
-                                    <button onclick="editActividad('${actividad.id}')" class="btn-small">✏️</button>
-                                    <button onclick="deleteActividad('${actividad.id}')" class="btn-small btn-danger">🗑️</button>
+                                    <button onclick="editActividad('${actividad.id}')" class="btn-small">✏️ Editar</button>
+                                    <button onclick="deleteActividad('${actividad.id}')" class="btn-small btn-danger">🗑️ Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -358,18 +437,18 @@
                     <div class="presupuesto-resumen">
                         <div class="balance-card ${balance >= 0 ? 'positivo' : 'negativo'}">
                             <h4>💰 Balance</h4>
-                            <div class="monto">${balance >= 0 ? '+' : ''}$${balance.toLocaleString()}</div>
+                            <div class="monto">${balance >= 0 ? '+' : ''}$${balance.toLocaleString()} MXN</div>
                             <p>${balance >= 0 ? 'Dinero disponible' : 'Presupuesto excedido'}</p>
                         </div>
                         
                         <div class="resumen-card">
                             <h4>📈 Dinero disponible</h4>
-                            <div class="monto positivo">$${totalIngresos.toLocaleString()}</div>
+                            <div class="monto positivo">$${totalIngresos.toLocaleString()} MXN</div>
                         </div>
                         
                         <div class="resumen-card">
                             <h4>📉 Total planificado</h4>
-                            <div class="monto negativo">$${totalEgresos.toLocaleString()}</div>
+                            <div class="monto negativo">$${totalEgresos.toLocaleString()} MXN</div>
                         </div>
                     </div>
                     
@@ -380,7 +459,7 @@
                                 ${(viajeData.presupuesto.ingresos || []).map(ingreso => `
                                     <div class="ingreso-item">
                                         <span class="descripcion">${ingreso.descripcion}</span>
-                                        <span class="monto">$${ingreso.monto.toLocaleString()}</span>
+                                        <span class="monto">$${ingreso.monto.toLocaleString()} MXN</span>
                                         <button onclick="deleteIngreso('${ingreso.id}')" class="btn-tiny">🗑️</button>
                                     </div>
                                 `).join('')}
@@ -397,17 +476,17 @@
                                 <div class="gasto-categoria">
                                     <span class="icono">✈️</span>
                                     <span class="nombre">Transportes</span>
-                                    <span class="monto">$${costoTransportes.toLocaleString()}</span>
+                                    <span class="monto">$${costoTransportes.toLocaleString()} MXN</span>
                                 </div>
                                 <div class="gasto-categoria">
                                     <span class="icono">🏨</span>
                                     <span class="nombre">Hoteles</span>
-                                    <span class="monto">$${costoHoteles.toLocaleString()}</span>
+                                    <span class="monto">$${costoHoteles.toLocaleString()} MXN</span>
                                 </div>
                                 <div class="gasto-categoria">
                                     <span class="icono">🎯</span>
                                     <span class="nombre">Actividades</span>
-                                    <span class="monto">$${costoActividades.toLocaleString()}</span>
+                                    <span class="monto">$${costoActividades.toLocaleString()} MXN</span>
                                 </div>
                             </div>
                         </div>
@@ -417,6 +496,10 @@
         }
 
         // Funciones auxiliares
+        function convertirAMXN(cantidad, moneda) {
+            return Math.round(cantidad * exchangeRates[moneda]);
+        }
+
         function calcularDiasViaje() {
             const inicio = new Date(viajeData.fechaInicio || "2024-12-20");
             const fin = new Date(viajeData.fechaFin || "2025-01-06");
@@ -429,11 +512,17 @@
             return Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
         }
 
-        function formatDate(dateString) {
+        function formatDateShort(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+        }
+
+        function formatDateLong(dateString) {
             const date = new Date(dateString);
             return date.toLocaleDateString('es-ES', { 
                 day: '2-digit', 
-                month: 'short'
+                month: 'short',
+                year: 'numeric'
             });
         }
 
@@ -447,21 +536,6 @@
             return icons[tipo] || '🚗';
         }
 
-        function getHotelNombre(hotelId) {
-            const hotel = (viajeData.hoteles || []).find(h => h.id === hotelId);
-            return hotel ? hotel.nombre : 'Hotel no encontrado';
-        }
-
-        function getTransporteDescripcion(transporteId) {
-            const transporte = (viajeData.transportes || []).find(t => t.id === transporteId);
-            return transporte ? `${transporte.tipo} ${transporte.origen}→${transporte.destino}` : 'Transporte no encontrado';
-        }
-
-        function getActividadNombre(actividadId) {
-            const actividad = (viajeData.actividades || []).find(a => a.id === actividadId);
-            return actividad ? actividad.nombre : 'Actividad no encontrada';
-        }
-
         function calcularTotalIngresos() {
             return (viajeData.presupuesto?.ingresos || []).reduce((sum, ingreso) => sum + ingreso.monto, 0);
         }
@@ -471,15 +545,18 @@
         }
 
         function calcularCostoTransportes() {
-            return (viajeData.transportes || []).reduce((sum, transporte) => sum + (transporte.costo || 0), 0);
+            return (viajeData.transportes || []).reduce((sum, transporte) => 
+                sum + convertirAMXN(transporte.costoOriginal || 0, transporte.moneda || 'MXN'), 0);
         }
 
         function calcularCostoHoteles() {
-            return (viajeData.hoteles || []).reduce((sum, hotel) => sum + (hotel.costoTotal || 0), 0);
+            return (viajeData.hoteles || []).reduce((sum, hotel) => 
+                sum + convertirAMXN(hotel.costoOriginal || 0, hotel.moneda || 'MXN'), 0);
         }
 
         function calcularCostoActividades() {
-            return (viajeData.actividades || []).reduce((sum, actividad) => sum + (actividad.costo || 0), 0);
+            return (viajeData.actividades || []).reduce((sum, actividad) => 
+                sum + convertirAMXN(actividad.costoOriginal || 0, actividad.moneda || 'MXN'), 0);
         }
 
         // Funciones globales
@@ -491,29 +568,29 @@
             event.target.classList.add('active');
         };
 
-        window.addPeriodo = function() {
-            openPeriodoModal();
+        window.addEstancia = function() {
+            openEstanciaModal();
         };
 
-        function openPeriodoModal(periodoIndex = null) {
-            const periodo = periodoIndex !== null ? viajeData.periodos[periodoIndex] : null;
+        function openEstanciaModal(estanciaIndex = null) {
+            const estancia = estanciaIndex !== null ? viajeData.estancias[estanciaIndex] : null;
             
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
                 <div class="modal-content large">
-                    <h3>${periodo ? '✏️ Editar' : '➕ Nuevo'} Período del Viaje</h3>
-                    <form id="periodoForm">
+                    <h3>${estancia ? '✏️ Editar' : '➕ Nueva'} Estancia</h3>
+                    <form id="estanciaForm">
                         <div class="form-section">
-                            <h4>📅 Fechas</h4>
+                            <h4>📅 Fechas de la Estancia</h4>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Fecha inicio:</label>
-                                    <input type="date" id="periodoFechaInicio" value="${periodo?.fechaInicio || ''}" min="2024-12-20" max="2025-01-06" required>
+                                    <input type="date" id="fechaInicio" value="${estancia?.fechaInicio || ''}" min="2024-12-20" max="2025-01-06" required>
                                 </div>
                                 <div class="form-group">
                                     <label>Fecha fin:</label>
-                                    <input type="date" id="periodoFechaFin" value="${periodo?.fechaFin || ''}" min="2024-12-20" max="2025-01-06" required>
+                                    <input type="date" id="fechaFin" value="${estancia?.fechaFin || ''}" min="2024-12-20" max="2025-01-06" required>
                                 </div>
                             </div>
                         </div>
@@ -522,61 +599,39 @@
                             <h4>🏙️ Destino</h4>
                             <div class="form-group">
                                 <label>Ciudad/Destino:</label>
-                                <input type="text" id="periodoDestino" value="${periodo?.destino || ''}" placeholder="Ej: Zurich, St Moritz, Milan...">
+                                <input type="text" id="destino" value="${estancia?.destino || ''}" placeholder="Ej: Zurich, St Moritz, Milan..." required>
                             </div>
                         </div>
                         
                         <div class="form-section">
-                            <h4>🏨 Hospedaje (Opcional)</h4>
+                            <h4>🏨 Hospedaje</h4>
                             <div class="form-group">
-                                <label>Hotel:</label>
-                                <select id="periodoHotel">
-                                    <option value="">Seleccionar hotel...</option>
-                                    ${(viajeData.hoteles || []).map(hotel => 
-                                        `<option value="${hotel.id}" ${periodo?.hotelId === hotel.id ? 'selected' : ''}>${hotel.nombre} - ${hotel.ciudad}</option>`
-                                    ).join('')}
-                                </select>
+                                <label>Hotel y detalles:</label>
+                                <textarea id="hotel" rows="2" placeholder="Ej: Holiday Inn Airport Zurich - €120/noche, del 20 al 22 dic, desayuno incluido">${estancia?.hotel || ''}</textarea>
                             </div>
                         </div>
                         
                         <div class="form-section">
-                            <h4>✈️ Transporte (Opcional)</h4>
+                            <h4>✈️ Transporte</h4>
                             <div class="form-group">
-                                <label>Transporte:</label>
-                                <select id="periodoTransporte">
-                                    <option value="">Seleccionar transporte...</option>
-                                    ${(viajeData.transportes || []).map(transporte => 
-                                        `<option value="${transporte.id}" ${periodo?.transporteId === transporte.id ? 'selected' : ''}>${transporte.tipo} ${transporte.origen}→${transporte.destino}</option>`
-                                    ).join('')}
-                                </select>
+                                <label>Transporte y detalles:</label>
+                                <textarea id="transporte" rows="2" placeholder="Ej: Tren a las 5:00pm, 20 de diciembre, €50 por persona, Zurich→Milan">${estancia?.transporte || ''}</textarea>
                             </div>
                         </div>
                         
                         <div class="form-section">
-                            <h4>🎯 Actividades (Opcional)</h4>
+                            <h4>🎯 Actividades</h4>
                             <div class="form-group">
-                                <label>Actividades a realizar:</label>
-                                <div class="actividades-selector">
-                                    ${(viajeData.actividades || []).map(actividad => `
-                                        <label class="checkbox-item">
-                                            <input type="checkbox" value="${actividad.id}" 
-                                                ${periodo?.actividadesIds?.includes(actividad.id) ? 'checked' : ''}>
-                                            <span>${actividad.nombre} (${actividad.ciudad})</span>
-                                        </label>
-                                    `).join('')}
-                                    
-                                    ${(viajeData.actividades || []).length === 0 ? 
-                                        '<p class="no-options">No hay actividades registradas</p>' : ''
-                                    }
-                                </div>
+                                <label>Actividades planeadas:</label>
+                                <textarea id="actividades" rows="3" placeholder="Ej: Visita al Duomo (€15), Tour en gondola (€80), Museo de Arte, Cena en restaurante típico">${estancia?.actividades || ''}</textarea>
                             </div>
                         </div>
                         
                         <div class="form-section">
-                            <h4>📝 Notas (Opcional)</h4>
+                            <h4>📝 Notas</h4>
                             <div class="form-group">
                                 <label>Notas adicionales:</label>
-                                <textarea id="periodoNotas" rows="3" placeholder="Cualquier información adicional...">${periodo?.notas || ''}</textarea>
+                                <textarea id="notas" rows="2" placeholder="Cualquier información adicional...">${estancia?.notas || ''}</textarea>
                             </div>
                         </div>
                         
@@ -590,30 +645,25 @@
             
             document.body.appendChild(modal);
             
-            document.getElementById('periodoForm').onsubmit = function(e) {
+            document.getElementById('estanciaForm').onsubmit = function(e) {
                 e.preventDefault();
                 
-                // Recoger actividades seleccionadas
-                const actividadesSeleccionadas = Array.from(
-                    document.querySelectorAll('.actividades-selector input[type="checkbox"]:checked')
-                ).map(checkbox => checkbox.value);
-                
-                const nuevoPeriodo = {
-                    fechaInicio: document.getElementById('periodoFechaInicio').value,
-                    fechaFin: document.getElementById('periodoFechaFin').value,
-                    destino: document.getElementById('periodoDestino').value,
-                    hotelId: document.getElementById('periodoHotel').value || null,
-                    transporteId: document.getElementById('periodoTransporte').value || null,
-                    actividadesIds: actividadesSeleccionadas,
-                    notas: document.getElementById('periodoNotas').value
+                const nuevaEstancia = {
+                    fechaInicio: document.getElementById('fechaInicio').value,
+                    fechaFin: document.getElementById('fechaFin').value,
+                    destino: document.getElementById('destino').value,
+                    hotel: document.getElementById('hotel').value,
+                    transporte: document.getElementById('transporte').value,
+                    actividades: document.getElementById('actividades').value,
+                    notas: document.getElementById('notas').value
                 };
                 
-                if (!viajeData.periodos) viajeData.periodos = [];
+                if (!viajeData.estancias) viajeData.estancias = [];
                 
-                if (periodo) {
-                    viajeData.periodos[periodoIndex] = nuevoPeriodo;
+                if (estancia) {
+                    viajeData.estancias[estanciaIndex] = nuevaEstancia;
                 } else {
-                    viajeData.periodos.push(nuevoPeriodo);
+                    viajeData.estancias.push(nuevaEstancia);
                 }
                 
                 saveData('viajeData', viajeData);
@@ -622,51 +672,467 @@
             };
         }
 
-        window.editPeriodo = function(index) {
-            openPeriodoModal(index);
+        window.editEstancia = function(index) {
+            openEstanciaModal(index);
         };
 
-        window.deletePeriodo = function(index) {
-            if (confirm('¿Eliminar este período?')) {
-                viajeData.periodos.splice(index, 1);
+        window.deleteEstancia = function(index) {
+            if (confirm('¿Eliminar esta estancia?')) {
+                viajeData.estancias.splice(index, 1);
                 saveData('viajeData', viajeData);
                 renderApp();
             }
         };
 
-        // Función placeholder para otras funciones
         window.addTransporte = function() {
-            alert('Función en desarrollo - Agregar desde el modal del período');
+            openTransporteModal();
         };
 
-        window.addHotel = function() {
-            alert('Función en desarrollo - Agregar desde el modal del período');
-        };
-
-        window.addActividad = function() {
-            alert('Función en desarrollo - Agregar desde el modal del período');
-        };
-
-        window.addIngreso = function() {
-            const descripcion = prompt('Descripción del dinero disponible:');
-            if (!descripcion) return;
+        function openTransporteModal(transporteId = null) {
+            const transporte = transporteId ? 
+                viajeData.transportes.find(t => t.id === transporteId) : null;
             
-            const monto = prompt('Cantidad:');
-            if (!monto || isNaN(monto)) return;
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${transporte ? '✏️ Editar' : '➕ Nuevo'} Transporte</h3>
+                    <form id="transporteForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo de transporte:</label>
+                                <select id="tipo" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Avión" ${transporte?.tipo === 'Avión' ? 'selected' : ''}>✈️ Avión</option>
+                                    <option value="Tren" ${transporte?.tipo === 'Tren' ? 'selected' : ''}>🚂 Tren</option>
+                                    <option value="Autobús" ${transporte?.tipo === 'Autobús' ? 'selected' : ''}>🚌 Autobús</option>
+                                    <option value="Auto" ${transporte?.tipo === 'Auto' ? 'selected' : ''}>🚗 Auto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha:</label>
+                                <input type="date" id="fecha" value="${transporte?.fecha || ''}" min="2024-12-20" max="2025-01-06" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Origen:</label>
+                                <input type="text" id="origen" value="${transporte?.origen || ''}" placeholder="Ciudad de origen" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Destino:</label>
+                                <input type="text" id="destino" value="${transporte?.destino || ''}" placeholder="Ciudad de destino" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Hora (opcional):</label>
+                                <input type="time" id="hora" value="${transporte?.hora || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="moneda" required>
+                                    <option value="MXN" ${transporte?.moneda === 'MXN' ? 'selected' : ''}>🇲🇽 Pesos MXN</option>
+                                    <option value="USD" ${transporte?.moneda === 'USD' ? 'selected' : ''}>🇺🇸 Dólares USD</option>
+                                    <option value="EUR" ${transporte?.moneda === 'EUR' ? 'selected' : ''}>🇪🇺 Euros EUR</option>
+                                    <option value="CHF" ${transporte?.moneda === 'CHF' ? 'selected' : ''}>🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo (para 4 personas):</label>
+                            <input type="number" id="costoOriginal" value="${transporte?.costoOriginal || ''}" required onchange="calcularConversion()">
+                            <div id="conversionPreview" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notas (opcional):</label>
+                            <textarea id="notas" rows="2" placeholder="Ej: Vuelo directo, asientos reservados">${transporte?.notas || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
             
-            const ingreso = {
-                id: Date.now().toString(),
-                descripcion: descripcion,
-                monto: parseInt(monto)
+            document.body.appendChild(modal);
+            
+            // Función para calcular conversión en tiempo real
+            window.calcularConversion = function() {
+                const costo = parseFloat(document.getElementById('costoOriginal').value) || 0;
+                const moneda = document.getElementById('moneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionPreview').innerHTML = 
+                    costo > 0 ? `≈ $${costoMXN.toLocaleString()} MXN` : '';
             };
             
-            if (!viajeData.presupuesto.ingresos) {
-                viajeData.presupuesto.ingresos = [];
+            // Calcular conversión inicial si estamos editando
+            if (transporte) {
+                setTimeout(calcularConversion, 100);
             }
             
-            viajeData.presupuesto.ingresos.push(ingreso);
-            saveData('viajeData', viajeData);
-            renderApp();
+            document.getElementById('transporteForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevoTransporte = {
+                    id: transporte?.id || Date.now().toString(),
+                    tipo: document.getElementById('tipo').value,
+                    fecha: document.getElementById('fecha').value,
+                    origen: document.getElementById('origen').value,
+                    destino: document.getElementById('destino').value,
+                    hora: document.getElementById('hora').value,
+                    moneda: document.getElementById('moneda').value,
+                    costoOriginal: parseFloat(document.getElementById('costoOriginal').value),
+                    notas: document.getElementById('notas').value
+                };
+                
+                if (!viajeData.transportes) viajeData.transportes = [];
+                
+                if (transporte) {
+                    const index = viajeData.transportes.findIndex(t => t.id === transporteId);
+                    viajeData.transportes[index] = nuevoTransporte;
+                } else {
+                    viajeData.transportes.push(nuevoTransporte);
+                }
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        window.addHotel = function() {
+            openHotelModal();
+        };
+
+        function openHotelModal(hotelId = null) {
+            const hotel = hotelId ? 
+                viajeData.hoteles.find(h => h.id === hotelId) : null;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${hotel ? '✏️ Editar' : '➕ Nuevo'} Hotel</h3>
+                    <form id="hotelForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre del hotel:</label>
+                                <input type="text" id="nombre" value="${hotel?.nombre || ''}" placeholder="Ej: Holiday Inn Airport" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad:</label>
+                                <input type="text" id="ciudad" value="${hotel?.ciudad || ''}" placeholder="Ej: Zurich" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha inicio:</label>
+                                <input type="date" id="fechaInicio" value="${hotel?.fechaInicio || ''}" min="2024-12-20" max="2025-01-06" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha fin:</label>
+                                <input type="date" id="fechaFin" value="${hotel?.fechaFin || ''}" min="2024-12-20" max="2025-01-06" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo de habitación:</label>
+                                <select id="tipoHabitacion">
+                                    <option value="Estándar" ${hotel?.tipoHabitacion === 'Estándar' ? 'selected' : ''}>Estándar</option>
+                                    <option value="Doble" ${hotel?.tipoHabitacion === 'Doble' ? 'selected' : ''}>Doble</option>
+                                    <option value="Triple" ${hotel?.tipoHabitacion === 'Triple' ? 'selected' : ''}>Triple</option>
+                                    <option value="Familiar" ${hotel?.tipoHabitacion === 'Familiar' ? 'selected' : ''}>Familiar</option>
+                                    <option value="Suite" ${hotel?.tipoHabitacion === 'Suite' ? 'selected' : ''}>Suite</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Cantidad habitaciones:</label>
+                                <input type="number" id="cantidadHabitaciones" value="${hotel?.cantidadHabitaciones || 1}" min="1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Desayuno incluido:</label>
+                                <select id="desayunoIncluido">
+                                    <option value="true" ${hotel?.desayunoIncluido === true ? 'selected' : ''}>✅ Sí incluido</option>
+                                    <option value="false" ${hotel?.desayunoIncluido === false ? 'selected' : ''}>❌ No incluido</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="moneda" required>
+                                    <option value="MXN" ${hotel?.moneda === 'MXN' ? 'selected' : ''}>🇲🇽 Pesos MXN</option>
+                                    <option value="USD" ${hotel?.moneda === 'USD' ? 'selected' : ''}>🇺🇸 Dólares USD</option>
+                                    <option value="EUR" ${hotel?.moneda === 'EUR' ? 'selected' : ''}>🇪🇺 Euros EUR</option>
+                                    <option value="CHF" ${hotel?.moneda === 'CHF' ? 'selected' : ''}>🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo total de la estancia:</label>
+                            <input type="number" id="costoOriginal" value="${hotel?.costoOriginal || ''}" required onchange="calcularConversionHotel()">
+                            <div id="conversionPreview" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notas (opcional):</label>
+                            <textarea id="notas" rows="2" placeholder="Ej: WiFi gratis, piscina, cerca del centro">${hotel?.notas || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.calcularConversionHotel = function() {
+                const costo = parseFloat(document.getElementById('costoOriginal').value) || 0;
+                const moneda = document.getElementById('moneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionPreview').innerHTML = 
+                    costo > 0 ? `≈ $${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            if (hotel) {
+                setTimeout(calcularConversionHotel, 100);
+            }
+            
+            document.getElementById('hotelForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevoHotel = {
+                    id: hotel?.id || Date.now().toString(),
+                    nombre: document.getElementById('nombre').value,
+                    ciudad: document.getElementById('ciudad').value,
+                    fechaInicio: document.getElementById('fechaInicio').value,
+                    fechaFin: document.getElementById('fechaFin').value,
+                    tipoHabitacion: document.getElementById('tipoHabitacion').value,
+                    cantidadHabitaciones: parseInt(document.getElementById('cantidadHabitaciones').value),
+                    desayunoIncluido: document.getElementById('desayunoIncluido').value === 'true',
+                    moneda: document.getElementById('moneda').value,
+                    costoOriginal: parseFloat(document.getElementById('costoOriginal').value),
+                    notas: document.getElementById('notas').value
+                };
+                
+                if (!viajeData.hoteles) viajeData.hoteles = [];
+                
+                if (hotel) {
+                    const index = viajeData.hoteles.findIndex(h => h.id === hotelId);
+                    viajeData.hoteles[index] = nuevoHotel;
+                } else {
+                    viajeData.hoteles.push(nuevoHotel);
+                }
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        window.addActividad = function() {
+            openActividadModal();
+        };
+
+        function openActividadModal(actividadId = null) {
+            const actividad = actividadId ? 
+                viajeData.actividades.find(a => a.id === actividadId) : null;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${actividad ? '✏️ Editar' : '➕ Nueva'} Actividad</h3>
+                    <form id="actividadForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre de la actividad:</label>
+                                <input type="text" id="nombre" value="${actividad?.nombre || ''}" placeholder="Ej: Visita al Duomo" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad:</label>
+                                <input type="text" id="ciudad" value="${actividad?.ciudad || ''}" placeholder="Ej: Milan" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Descripción (opcional):</label>
+                            <textarea id="descripcion" rows="2" placeholder="Descripción de la actividad">${actividad?.descripcion || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Duración (opcional):</label>
+                                <input type="text" id="duracion" value="${actividad?.duracion || ''}" placeholder="Ej: 2 horas, Medio día">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda:</label>
+                                <select id="moneda">
+                                    <option value="MXN" ${actividad?.moneda === 'MXN' ? 'selected' : ''}>🇲🇽 Pesos MXN</option>
+                                    <option value="USD" ${actividad?.moneda === 'USD' ? 'selected' : ''}>🇺🇸 Dólares USD</option>
+                                    <option value="EUR" ${actividad?.moneda === 'EUR' ? 'selected' : ''}>🇪🇺 Euros EUR</option>
+                                    <option value="CHF" ${actividad?.moneda === 'CHF' ? 'selected' : ''}>🇨🇭 Francos CHF</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Costo (opcional, para 4 personas):</label>
+                            <input type="number" id="costoOriginal" value="${actividad?.costoOriginal || ''}" placeholder="0" onchange="calcularConversionActividad()">
+                            <div id="conversionPreview" class="conversion-preview"></div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.calcularConversionActividad = function() {
+                const costo = parseFloat(document.getElementById('costoOriginal').value) || 0;
+                const moneda = document.getElementById('moneda').value;
+                const costoMXN = convertirAMXN(costo, moneda);
+                
+                document.getElementById('conversionPreview').innerHTML = 
+                    costo > 0 ? `≈ $${costoMXN.toLocaleString()} MXN` : '';
+            };
+            
+            if (actividad) {
+                setTimeout(calcularConversionActividad, 100);
+            }
+            
+            document.getElementById('actividadForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const nuevaActividad = {
+                    id: actividad?.id || Date.now().toString(),
+                    nombre: document.getElementById('nombre').value,
+                    ciudad: document.getElementById('ciudad').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    duracion: document.getElementById('duracion').value,
+                    moneda: document.getElementById('moneda').value,
+                    costoOriginal: parseFloat(document.getElementById('costoOriginal').value) || 0
+                };
+                
+                if (!viajeData.actividades) viajeData.actividades = [];
+                
+                if (actividad) {
+                    const index = viajeData.actividades.findIndex(a => a.id === actividadId);
+                    viajeData.actividades[index] = nuevaActividad;
+                } else {
+                    viajeData.actividades.push(nuevaActividad);
+                }
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        window.addIngreso = function() {
+            openIngresoModal();
+        };
+
+        function openIngresoModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>💰 Agregar Dinero Disponible</h3>
+                    <form id="ingresoForm">
+                        <div class="form-group">
+                            <label>Descripción:</label>
+                            <input type="text" id="descripcion" placeholder="Ej: Presupuesto familiar, Ahorros del viaje" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad (en pesos mexicanos):</label>
+                            <input type="number" id="monto" placeholder="0" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('ingresoForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const ingreso = {
+                    id: Date.now().toString(),
+                    descripcion: document.getElementById('descripcion').value,
+                    monto: parseInt(document.getElementById('monto').value)
+                };
+                
+                if (!viajeData.presupuesto.ingresos) {
+                    viajeData.presupuesto.ingresos = [];
+                }
+                
+                viajeData.presupuesto.ingresos.push(ingreso);
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        }
+
+        // Funciones de edición y eliminación
+        window.editTransporte = function(id) {
+            openTransporteModal(id);
+        };
+
+        window.deleteTransporte = function(id) {
+            if (confirm('¿Eliminar este transporte?')) {
+                viajeData.transportes = viajeData.transportes.filter(t => t.id !== id);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        window.editHotel = function(id) {
+            openHotelModal(id);
+        };
+
+        window.deleteHotel = function(id) {
+            if (confirm('¿Eliminar este hotel?')) {
+                viajeData.hoteles = viajeData.hoteles.filter(h => h.id !== id);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        window.editActividad = function(id) {
+            openActividadModal(id);
+        };
+
+        window.deleteActividad = function(id) {
+            if (confirm('¿Eliminar esta actividad?')) {
+                viajeData.actividades = viajeData.actividades.filter(a => a.id !== id);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
         };
 
         window.deleteIngreso = function(id) {
@@ -771,7 +1237,93 @@
             display: block;
         }
         
-        /* Estilos del itinerario */
+        /* Calendario personalizado */
+        .calendario {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .calendario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendario-header h4 {
+            font-size: 18px;
+            color: #1a202c;
+        }
+        
+        .calendario-info {
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .mes-calendario h5 {
+            text-align: center;
+            margin-bottom: 12px;
+            color: #4a5568;
+            font-size: 16px;
+        }
+        
+        .dias-semana {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+        
+        .dias-semana span {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #718096;
+            padding: 8px;
+        }
+        
+        .dias-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        
+        .dia, .dia-vacio {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+        
+        .dia {
+            background: #f7fafc;
+            color: #4a5568;
+        }
+        
+        .dia-viaje {
+            background: #e6fffa;
+            color: #285e61;
+            font-weight: 600;
+        }
+        
+        .dia-ocupado {
+            background: #667eea;
+            color: white;
+            font-weight: 700;
+        }
+        
+        /* Itinerario */
         .itinerario-container {
             padding: 30px;
         }
@@ -830,12 +1382,12 @@
             margin-bottom: 24px;
         }
         
-        .periodos-lista {
+        .estancias-lista {
             display: grid;
             gap: 20px;
         }
         
-        .periodo-card {
+        .estancia-card {
             background: white;
             border-radius: 12px;
             padding: 24px;
@@ -843,14 +1395,14 @@
             border-left: 4px solid #667eea;
         }
         
-        .periodo-header {
+        .estancia-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 20px;
         }
         
-        .periodo-fechas h4 {
+        .estancia-fechas h4 {
             font-size: 18px;
             color: #1a202c;
             margin-bottom: 4px;
@@ -865,17 +1417,18 @@
             font-weight: 500;
         }
         
-        .periodo-acciones {
+        .estancia-acciones {
             display: flex;
             gap: 8px;
         }
         
         .btn-edit, .btn-delete {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: 500;
         }
         
         .btn-edit {
@@ -888,12 +1441,12 @@
             color: white;
         }
         
-        .periodo-detalles {
+        .estancia-detalles {
             display: grid;
-            gap: 12px;
+            gap: 16px;
         }
         
-        .detalle-item {
+        .detalle-grupo {
             display: flex;
             align-items: flex-start;
             gap: 12px;
@@ -903,11 +1456,13 @@
             font-weight: 600;
             color: #4a5568;
             min-width: 120px;
+            flex-shrink: 0;
         }
         
         .value {
             color: #1a202c;
             flex: 1;
+            white-space: pre-wrap;
         }
         
         /* Secciones generales */
@@ -931,7 +1486,7 @@
         
         .elementos-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
         }
         
@@ -979,10 +1534,19 @@
             background: #8b5cf6;
         }
         
-        .costo {
-            font-size: 18px;
+        .precios {
+            text-align: right;
+        }
+        
+        .precio-original {
+            font-size: 16px;
             font-weight: 700;
             color: #059669;
+        }
+        
+        .precio-mxn {
+            font-size: 12px;
+            color: #718096;
         }
         
         .elemento-contenido h4 {
@@ -1040,16 +1604,20 @@
             padding: 40px;
             color: #718096;
             font-style: italic;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         /* Hoteles específicos */
-        .hotel-nombre h4 {
+        .hotel-info h4 {
             margin-bottom: 4px;
         }
         
-        .ciudad {
+        .ciudad, .fechas {
             color: #718096;
             font-size: 14px;
+            display: block;
         }
         
         .desayuno.incluido {
@@ -1058,11 +1626,6 @@
         
         .desayuno.no-incluido {
             color: #e53e3e;
-        }
-        
-        .precio-detalle {
-            font-size: 12px;
-            color: #718096;
         }
         
         /* Actividades específicas */
@@ -1227,14 +1790,14 @@
             background: white;
             border-radius: 12px;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
             padding: 24px;
         }
         
         .modal-content.large {
-            max-width: 700px;
+            max-width: 800px;
         }
         
         .modal-content h3 {
@@ -1290,31 +1853,19 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
-        .actividades-selector {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
+        .form-group textarea {
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .conversion-preview {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f0fdf4;
             border-radius: 6px;
-            padding: 12px;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 0;
-            cursor: pointer;
-        }
-        
-        .checkbox-item input {
-            margin-right: 8px;
-            width: auto;
-        }
-        
-        .no-options {
-            color: #718096;
-            font-style: italic;
-            text-align: center;
-            padding: 20px;
+            color: #166534;
+            font-size: 13px;
+            font-weight: 500;
         }
         
         .form-buttons {
@@ -1361,6 +1912,10 @@
                 align-items: stretch;
             }
             
+            .calendario-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .elementos-grid {
                 grid-template-columns: 1fr;
             }
@@ -1381,9 +1936,18 @@
                 flex-direction: column;
             }
             
-            .periodo-header {
+            .estancia-header {
                 flex-direction: column;
                 gap: 12px;
+            }
+            
+            .detalle-grupo {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .label {
+                min-width: auto;
             }
         }
         
@@ -1398,6 +1962,15 @@
             
             .form-section {
                 padding: 16px;
+            }
+            
+            .tabs {
+                justify-content: center;
+            }
+            
+            .tab-btn {
+                padding: 12px 16px;
+                font-size: 13px;
             }
         }
     </style>
