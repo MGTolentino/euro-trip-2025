@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Viaje Familiar - Italia y Suiza</title>
+    <title>Gestor de Viaje - Europa 2025</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+    
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { getDatabase, ref, set, get, onValue, push } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+        import { getDatabase, ref, set, get, onValue, push, update } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAI2ofzM5BdlqK7glDAz5OPZ-L5Oslf_28",
             authDomain: "euro-trip-2025.firebaseapp.com",
@@ -20,7 +20,6 @@
             appId: "1:218713594766:web:e84557d13d976e327d62df"
         };
 
-        // Initialize Firebase
         let app, database;
         let isFirebaseConnected = false;
 
@@ -28,505 +27,387 @@
             app = initializeApp(firebaseConfig);
             database = getDatabase(app);
             isFirebaseConnected = true;
-            console.log('Firebase conectado correctamente');
         } catch (error) {
-            console.log('Firebase no configurado, usando almacenamiento local');
-            isFirebaseConnected = false;
+            console.error('Error Firebase:', error);
         }
 
-        // Datos iniciales del viaje
         const initialData = {
-            viaje: {
-                titulo: "Viaje Familiar - Italia y Suiza",
-                fechaInicio: "2024-12-20",
-                fechaFin: "2025-01-06",
-                presupuestoTotal: 500000
-            },
             itinerario: [
-                {
-                    id: 1,
-                    fecha: "2024-12-20",
-                    ciudad: "Zurich",
-                    pais: "Suiza",
-                    llegada: "Llegada",
-                    salida: "",
-                    noches: 1,
-                    hotel: "Hotel Zurich Centro",
-                    costoHotel: 15000,
-                    transporte: "Vuelo México - Zurich",
-                    costoTransporte: 50000,
-                    actividades: ["Casco histórico", "Lago Zurich", "Bahnhofstrasse"],
-                    notas: "Desayuno incluido"
-                },
-                {
-                    id: 2,
-                    fecha: "2024-12-21",
-                    ciudad: "Zurich",
-                    pais: "Suiza",
-                    llegada: "",
-                    salida: "",
-                    noches: 1,
-                    hotel: "Hotel Zurich Centro",
-                    costoHotel: 15000,
-                    transporte: "",
-                    costoTransporte: 0,
-                    actividades: ["Museo Nacional Suizo", "Jardín Botánico", "Lucerna (día completo)"],
-                    notas: "Excursión a Lucerna"
-                },
-                {
-                    id: 3,
-                    fecha: "2024-12-22",
-                    ciudad: "Zurich",
-                    pais: "Suiza",
-                    llegada: "",
-                    salida: "Hacia St Moritz",
-                    noches: 0,
-                    hotel: "",
-                    costoHotel: 0,
-                    transporte: "Tren a St Moritz",
-                    costoTransporte: 8100,
-                    actividades: ["Viaje panorámico en tren"],
-                    notas: "Día de viaje"
-                },
-                {
-                    id: 4,
-                    fecha: "2024-12-23",
-                    ciudad: "St Moritz",
-                    pais: "Suiza",
-                    llegada: "Desde Zurich",
-                    salida: "",
-                    noches: 2,
-                    hotel: "Hotel St Moritz",
-                    costoHotel: 25000,
-                    transporte: "",
-                    costoTransporte: 0,
-                    actividades: ["Esquí", "Lago St Moritz", "Compras"],
-                    notas: "Navidad en los Alpes"
-                },
-                {
-                    id: 5,
-                    fecha: "2024-12-25",
-                    ciudad: "St Moritz",
-                    pais: "Suiza",
-                    llegada: "",
-                    salida: "Hacia Milan",
-                    noches: 0,
-                    hotel: "",
-                    costoHotel: 0,
-                    transporte: "Tren directo St Moritz - Milan",
-                    costoTransporte: 6000,
-                    actividades: ["Tirano - Milan en tren"],
-                    notas: "Viaje escénico"
-                },
-                {
-                    id: 6,
-                    fecha: "2024-12-26",
-                    ciudad: "Milan",
-                    pais: "Italia",
-                    llegada: "Desde St Moritz",
-                    salida: "",
-                    noches: 1,
-                    hotel: "Hotel Milan Centro",
-                    costoHotel: 12000,
-                    transporte: "",
-                    costoTransporte: 0,
-                    actividades: ["Duomo", "La Scala", "Galleria Vittorio Emanuele"],
-                    notas: "Día completo en Milan"
-                },
-                {
-                    id: 7,
-                    fecha: "2024-12-27",
-                    ciudad: "Milan/Turin",
-                    pais: "Italia",
-                    llegada: "",
-                    salida: "",
-                    noches: 1,
-                    hotel: "Hotel Turin",
-                    costoHotel: 8000,
-                    transporte: "Tren directo Milan - Turin",
-                    costoTransporte: 2000,
-                    actividades: ["Palazzo Reale", "Mole Antonelliana", "Centro histórico"],
-                    notas: ""
-                }
+                { id: 1, fecha: "2024-12-20", dia: "Sábado", ciudad: "Zurich", pais: "🇨🇭", llegada: "Vuelo MX", salida: "", noches: 1, hotel: "Hotel Zurich Centro", costoHotel: 15000, transporte: "Vuelo", costoTransporte: 50000, actividades: "Casco histórico, Lago Zurich", notas: "Desayuno incluido" },
+                { id: 2, fecha: "2024-12-21", dia: "Domingo", ciudad: "Zurich/Lucerna", pais: "🇨🇭", llegada: "", salida: "", noches: 1, hotel: "Hotel Zurich Centro", costoHotel: 15000, transporte: "", costoTransporte: 0, actividades: "Excursión Lucerna", notas: "Día completo" },
+                { id: 3, fecha: "2024-12-22", dia: "Lunes", ciudad: "Zurich → St Moritz", pais: "🇨🇭", llegada: "", salida: "Tren", noches: 0, hotel: "", costoHotel: 0, transporte: "Tren Zurich-St Moritz", costoTransporte: 8100, actividades: "Viaje panorámico", notas: "Tren redondo" },
+                { id: 4, fecha: "2024-12-23", dia: "Martes", ciudad: "St Moritz", pais: "🇨🇭", llegada: "Desde Zurich", salida: "", noches: 2, hotel: "Hotel St Moritz", costoHotel: 25000, transporte: "", costoTransporte: 0, actividades: "Esquí, lago", notas: "Navidad en Alpes" },
+                { id: 5, fecha: "2024-12-24", dia: "Miércoles", ciudad: "St Moritz", pais: "🇨🇭", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "Nochebuena", notas: "" },
+                { id: 6, fecha: "2024-12-25", dia: "Jueves", ciudad: "St Moritz → Milan", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 0, hotel: "", costoHotel: 0, transporte: "Tren Directo Tirano-Milan", costoTransporte: 6000, actividades: "Viaje escénico", notas: "Navidad" },
+                { id: 7, fecha: "2024-12-26", dia: "Viernes", ciudad: "Milan", pais: "🇮🇹", llegada: "Desde St Moritz", salida: "", noches: 1, hotel: "Hotel Milan", costoHotel: 12000, transporte: "", costoTransporte: 0, actividades: "Duomo, La Scala", notas: "Boxing Day" },
+                { id: 8, fecha: "2024-12-27", dia: "Sábado", ciudad: "Milan → Turin", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Turin", costoHotel: 8000, transporte: "Tren Milan-Turin", costoTransporte: 2000, actividades: "Centro histórico", notas: "" },
+                { id: 9, fecha: "2024-12-28", dia: "Domingo", ciudad: "Turin → Florencia", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 4, hotel: "Hotel Florencia", costoHotel: 15000, transporte: "Tren Turin-Florencia", costoTransporte: 1700, actividades: "Uffizi, Ponte Vecchio", notas: "4 noches" },
+                { id: 10, fecha: "2024-12-29", dia: "Lunes", ciudad: "Florencia", pais: "🇮🇹", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "David, Duomo", notas: "" },
+                { id: 11, fecha: "2024-12-30", dia: "Martes", ciudad: "Florencia → Pisa", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Pisa", costoHotel: 7500, transporte: "Tren Florencia-Pisa", costoTransporte: 900, actividades: "Torre inclinada", notas: "" },
+                { id: 12, fecha: "2024-12-31", dia: "Miércoles", ciudad: "Pisa → Roma", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 3, hotel: "Hotel Roma", costoHotel: 26000, transporte: "Tren Pisa-Roma", costoTransporte: 2500, actividades: "Coliseo, Vaticano", notas: "Año Nuevo" },
+                { id: 13, fecha: "2025-01-01", dia: "Jueves", ciudad: "Roma", pais: "🇮🇹", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "Año Nuevo", notas: "" },
+                { id: 14, fecha: "2025-01-02", dia: "Viernes", ciudad: "Roma → Venecia", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 2, hotel: "Hotel Venecia", costoHotel: 23000, transporte: "Tren Roma-Venecia", costoTransporte: 3000, actividades: "San Marcos, Dux", notas: "" },
+                { id: 15, fecha: "2025-01-03", dia: "Sábado", ciudad: "Venecia", pais: "🇮🇹", llegada: "", salida: "", noches: 0, hotel: "", costoHotel: 0, transporte: "", costoTransporte: 0, actividades: "Gondola, Rialto", notas: "" },
+                { id: 16, fecha: "2025-01-04", dia: "Domingo", ciudad: "Venecia → Verona", pais: "🇮🇹", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Verona", costoHotel: 7000, transporte: "Tren Venecia-Verona", costoTransporte: 1000, actividades: "Romeo y Julieta", notas: "" },
+                { id: 17, fecha: "2025-01-05", dia: "Lunes", ciudad: "Verona → Zurich", pais: "🇨🇭", llegada: "", salida: "Tren", noches: 1, hotel: "Hotel Aeropuerto", costoHotel: 2700, transporte: "Tren Verona-Zurich", costoTransporte: 6000, actividades: "Último día", notas: "" },
+                { id: 18, fecha: "2025-01-06", dia: "Martes", ciudad: "Zurich → México", pais: "🇲🇽", llegada: "", salida: "18:30 vuelo", noches: 0, hotel: "", costoHotel: 0, transporte: "Vuelo regreso", costoTransporte: 36300, actividades: "Vuelo de regreso", notas: "6:30pm salida" }
             ],
-            presupuesto: {
-                transporte: 0,
-                alojamiento: 0,
-                actividades: 0,
-                comida: 0,
-                otros: 0
-            }
+            gastos: [],
+            actividades: {}
         };
 
-        // Función para guardar datos
+        let viajeData = {};
+
         async function saveData(path, data) {
             if (isFirebaseConnected) {
                 try {
                     await set(ref(database, path), data);
-                    console.log('Datos guardados en Firebase');
                 } catch (error) {
-                    console.error('Error guardando en Firebase:', error);
-                    localStorage.setItem(path, JSON.stringify(data));
+                    console.error('Error guardando:', error);
                 }
-            } else {
-                localStorage.setItem(path, JSON.stringify(data));
             }
         }
 
-        // Función para cargar datos
         async function loadData(path) {
             if (isFirebaseConnected) {
                 try {
                     const snapshot = await get(ref(database, path));
-                    if (snapshot.exists()) {
-                        return snapshot.val();
-                    }
+                    return snapshot.exists() ? snapshot.val() : null;
                 } catch (error) {
-                    console.error('Error cargando de Firebase:', error);
+                    console.error('Error cargando:', error);
                 }
             }
-            
-            const localData = localStorage.getItem(path);
-            return localData ? JSON.parse(localData) : null;
+            return null;
         }
 
-        // Variables globales
-        let viajeData = {};
-
-        // Inicializar la aplicación cuando se carga la página
         window.addEventListener('DOMContentLoaded', async function() {
-            // Cargar datos o usar datos iniciales
             const savedData = await loadData('viajeData');
             viajeData = savedData || initialData;
             
-            // Si no hay datos guardados, guardar los iniciales
             if (!savedData) {
                 await saveData('viajeData', viajeData);
             }
 
             renderApp();
-            calcularPresupuesto();
         });
 
-        // Función para renderizar la aplicación
         function renderApp() {
             const app = document.getElementById('app');
             app.innerHTML = `
-                <div class="container">
-                    <header class="header">
-                        <h1>${viajeData.viaje.titulo}</h1>
-                        <p>${formatDate(viajeData.viaje.fechaInicio)} - ${formatDate(viajeData.viaje.fechaFin)}</p>
-                        <div class="status">
-                            ${isFirebaseConnected ? 
-                                '<span class="connected">🟢 Conectado a Firebase</span>' : 
-                                '<span class="offline">🔴 Modo Offline (LocalStorage)</span>'
-                            }
-                        </div>
-                    </header>
+                <div class="header">
+                    <h1>🌍 Viaje Europa 2025</h1>
+                    <div class="stats">
+                        <span class="stat">📅 18 días</span>
+                        <span class="stat">🏙️ 8 ciudades</span>
+                        <span class="stat">💰 $${calcularTotal().toLocaleString()}</span>
+                        <span class="stat ${isFirebaseConnected ? 'connected' : 'offline'}">
+                            ${isFirebaseConnected ? '🟢 Online' : '🔴 Offline'}
+                        </span>
+                    </div>
+                </div>
 
-                    <nav class="tabs">
-                        <button class="tab-btn active" onclick="showTab('itinerario')">📅 Itinerario</button>
-                        <button class="tab-btn" onclick="showTab('presupuesto')">💰 Presupuesto</button>
-                        <button class="tab-btn" onclick="showTab('actividades')">🎯 Actividades</button>
-                        <button class="tab-btn" onclick="showTab('configuracion')">⚙️ Config</button>
-                    </nav>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="showTab('itinerario')">📋 Itinerario</button>
+                    <button class="tab-btn" onclick="showTab('presupuesto')">💰 Presupuesto</button>
+                    <button class="tab-btn" onclick="showTab('gastos')">🧾 Gastos</button>
+                </div>
 
-                    <main>
-                        <div id="itinerario" class="tab-content active">
-                            ${renderItinerario()}
-                        </div>
-                        
-                        <div id="presupuesto" class="tab-content">
-                            ${renderPresupuesto()}
-                        </div>
-                        
-                        <div id="actividades" class="tab-content">
-                            ${renderActividades()}
-                        </div>
-                        
-                        <div id="configuracion" class="tab-content">
-                            ${renderConfiguracion()}
-                        </div>
-                    </main>
+                <div id="itinerario" class="tab-content active">
+                    ${renderItinerario()}
+                </div>
+                
+                <div id="presupuesto" class="tab-content">
+                    ${renderPresupuesto()}
+                </div>
+                
+                <div id="gastos" class="tab-content">
+                    ${renderGastos()}
                 </div>
             `;
         }
 
-        // Función para renderizar el itinerario
         function renderItinerario() {
             return `
-                <div class="itinerario-container">
-                    <div class="timeline">
-                        ${viajeData.itinerario.map(dia => `
-                            <div class="day-card" data-id="${dia.id}">
-                                <div class="day-header">
-                                    <div class="day-date">
-                                        <strong>${formatDate(dia.fecha)}</strong>
-                                        <span class="day-number">Día ${dia.id}</span>
-                                    </div>
-                                    <div class="city-info">
-                                        <h3>${dia.ciudad}, ${dia.pais}</h3>
-                                        ${dia.noches > 0 ? `<span class="nights">${dia.noches} noche${dia.noches > 1 ? 's' : ''}</span>` : ''}
-                                    </div>
+                <div class="table-container">
+                    <table class="itinerario-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Día</th>
+                                <th>Ciudad</th>
+                                <th>Noches</th>
+                                <th>Transporte</th>
+                                <th>Costo</th>
+                                <th>Hotel</th>
+                                <th>Costo</th>
+                                <th>Actividades</th>
+                                <th>Notas</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${viajeData.itinerario.map(dia => `
+                                <tr class="day-row">
+                                    <td class="fecha">${formatDateShort(dia.fecha)}</td>
+                                    <td>${dia.dia}</td>
+                                    <td class="ciudad">${dia.pais} ${dia.ciudad}</td>
+                                    <td class="center">${dia.noches || '-'}</td>
+                                    <td class="transporte">${dia.transporte || '-'}</td>
+                                    <td class="costo">${dia.costoTransporte > 0 ? '$' + dia.costoTransporte.toLocaleString() : '-'}</td>
+                                    <td class="hotel">${dia.hotel || '-'}</td>
+                                    <td class="costo">${dia.costoHotel > 0 ? '$' + dia.costoHotel.toLocaleString() : '-'}</td>
+                                    <td class="actividades">${dia.actividades}</td>
+                                    <td class="notas">${dia.notas || '-'}</td>
+                                    <td class="actions">
+                                        <button onclick="editRow(${dia.id})" class="btn-edit">✏️</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="actions-bar">
+                    <button onclick="addExpense()" class="btn-primary">➕ Agregar Gasto</button>
+                    <button onclick="exportItinerary()" class="btn-secondary">📤 Exportar</button>
+                </div>
+            `;
+        }
+
+        function renderPresupuesto() {
+            const totales = calcularTotales();
+            
+            return `
+                <div class="budget-grid">
+                    <div class="budget-card total">
+                        <h3>💰 Total del Viaje</h3>
+                        <div class="amount">$${totales.total.toLocaleString()}</div>
+                    </div>
+                    
+                    <div class="budget-card">
+                        <h4>🚂 Transporte</h4>
+                        <div class="amount">$${totales.transporte.toLocaleString()}</div>
+                        <div class="percentage">${((totales.transporte/totales.total)*100).toFixed(1)}%</div>
+                    </div>
+                    
+                    <div class="budget-card">
+                        <h4>🏨 Alojamiento</h4>
+                        <div class="amount">$${totales.alojamiento.toLocaleString()}</div>
+                        <div class="percentage">${((totales.alojamiento/totales.total)*100).toFixed(1)}%</div>
+                    </div>
+                    
+                    <div class="budget-card">
+                        <h4>🍽️ Comida (Est.)</h4>
+                        <div class="amount">$${totales.comidaEstimada.toLocaleString()}</div>
+                        <div class="percentage">${((totales.comidaEstimada/totales.total)*100).toFixed(1)}%</div>
+                    </div>
+                </div>
+
+                <div class="budget-breakdown">
+                    <h3>Desglose por Ciudad</h3>
+                    <table class="budget-table">
+                        <thead>
+                            <tr>
+                                <th>Ciudad</th>
+                                <th>Noches</th>
+                                <th>Transporte</th>
+                                <th>Hotel</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${getCiudadesResumen().map(ciudad => `
+                                <tr>
+                                    <td>${ciudad.nombre}</td>
+                                    <td class="center">${ciudad.noches}</td>
+                                    <td class="costo">$${ciudad.transporte.toLocaleString()}</td>
+                                    <td class="costo">$${ciudad.hotel.toLocaleString()}</td>
+                                    <td class="costo total-cell">$${(ciudad.transporte + ciudad.hotel).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderGastos() {
+            return `
+                <div class="gastos-container">
+                    <div class="gastos-header">
+                        <h3>🧾 Gastos del Viaje</h3>
+                        <button onclick="addExpense()" class="btn-primary">➕ Nuevo Gasto</button>
+                    </div>
+                    
+                    <div class="gastos-grid">
+                        ${(viajeData.gastos || []).map(gasto => `
+                            <div class="gasto-card">
+                                <div class="gasto-header">
+                                    <span class="categoria">${gasto.categoria}</span>
+                                    <span class="monto">$${gasto.monto.toLocaleString()}</span>
                                 </div>
-                                
-                                <div class="day-details">
-                                    <div class="section">
-                                        <h4>🚗 Transporte</h4>
-                                        <p>${dia.transporte || 'No hay transporte'}</p>
-                                        ${dia.costoTransporte > 0 ? `<span class="cost">$${dia.costoTransporte.toLocaleString()}</span>` : ''}
-                                    </div>
-                                    
-                                    ${dia.hotel ? `
-                                        <div class="section">
-                                            <h4>🏨 Alojamiento</h4>
-                                            <p>${dia.hotel}</p>
-                                            ${dia.costoHotel > 0 ? `<span class="cost">$${dia.costoHotel.toLocaleString()}</span>` : ''}
-                                        </div>
-                                    ` : ''}
-                                    
-                                    <div class="section">
-                                        <h4>🎯 Actividades</h4>
-                                        <ul>
-                                            ${dia.actividades.map(actividad => `<li>${actividad}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                    
-                                    ${dia.notas ? `
-                                        <div class="section">
-                                            <h4>📝 Notas</h4>
-                                            <p>${dia.notas}</p>
-                                        </div>
-                                    ` : ''}
+                                <div class="gasto-detalle">
+                                    <p><strong>${gasto.descripcion}</strong></p>
+                                    <p>${gasto.ciudad} - ${formatDateShort(gasto.fecha)}</p>
                                 </div>
-                                
-                                <div class="day-actions">
-                                    <button onclick="editDay(${dia.id})" class="btn-edit">✏️ Editar</button>
-                                </div>
+                                <button onclick="deleteExpense('${gasto.id}')" class="btn-delete">🗑️</button>
                             </div>
                         `).join('')}
-                    </div>
-                    
-                    <button onclick="addDay()" class="btn-add">➕ Agregar Día</button>
-                </div>
-            `;
-        }
-
-        // Función para renderizar el presupuesto
-        function renderPresupuesto() {
-            const totales = calcularPresupuesto();
-            
-            return `
-                <div class="presupuesto-container">
-                    <div class="budget-summary">
-                        <div class="budget-card total">
-                            <h3>Total del Viaje</h3>
-                            <div class="amount">$${totales.total.toLocaleString()}</div>
-                            <div class="remaining">
-                                Presupuesto: $${viajeData.viaje.presupuestoTotal.toLocaleString()}
-                                <br>
-                                <span class="${totales.total <= viajeData.viaje.presupuestoTotal ? 'positive' : 'negative'}">
-                                    ${totales.total <= viajeData.viaje.presupuestoTotal ? 'Restante' : 'Excedente'}: 
-                                    $${Math.abs(viajeData.viaje.presupuestoTotal - totales.total).toLocaleString()}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="budget-breakdown">
-                        <div class="budget-item">
-                            <div class="category">🚗 Transporte</div>
-                            <div class="amount">$${totales.transporte.toLocaleString()}</div>
-                            <div class="percentage">${((totales.transporte / totales.total) * 100).toFixed(1)}%</div>
-                        </div>
                         
-                        <div class="budget-item">
-                            <div class="category">🏨 Alojamiento</div>
-                            <div class="amount">$${totales.alojamiento.toLocaleString()}</div>
-                            <div class="percentage">${((totales.alojamiento / totales.total) * 100).toFixed(1)}%</div>
-                        </div>
-                        
-                        <div class="budget-item">
-                            <div class="category">🍽️ Comida estimada</div>
-                            <div class="amount">$${totales.comidaEstimada.toLocaleString()}</div>
-                            <div class="percentage">${((totales.comidaEstimada / totales.total) * 100).toFixed(1)}%</div>
-                        </div>
-                    </div>
-                    
-                    <div class="budget-details">
-                        <h3>Detalles por Día</h3>
-                        ${viajeData.itinerario.map(dia => {
-                            const costoTotal = dia.costoTransporte + dia.costoHotel;
-                            return costoTotal > 0 ? `
-                                <div class="day-budget">
-                                    <div class="day-info">
-                                        <strong>${dia.ciudad}</strong> - ${formatDate(dia.fecha)}
-                                    </div>
-                                    <div class="day-costs">
-                                        ${dia.costoTransporte > 0 ? `<span>Transporte: $${dia.costoTransporte.toLocaleString()}</span>` : ''}
-                                        ${dia.costoHotel > 0 ? `<span>Hotel: $${dia.costoHotel.toLocaleString()}</span>` : ''}
-                                        <strong>Total: $${costoTotal.toLocaleString()}</strong>
-                                    </div>
-                                </div>
-                            ` : '';
-                        }).join('')}
+                        ${(viajeData.gastos || []).length === 0 ? '<p class="empty-state">No hay gastos registrados</p>' : ''}
                     </div>
                 </div>
             `;
         }
 
-        // Función para renderizar actividades
-        function renderActividades() {
-            const ciudades = [...new Set(viajeData.itinerario.map(dia => dia.ciudad))];
-            
-            return `
-                <div class="actividades-container">
-                    ${ciudades.map(ciudad => {
-                        const diasEnCiudad = viajeData.itinerario.filter(dia => dia.ciudad === ciudad);
-                        const todasActividades = diasEnCiudad.flatMap(dia => dia.actividades);
-                        
-                        return `
-                            <div class="city-activities">
-                                <h3>${ciudad}</h3>
-                                <div class="activities-grid">
-                                    ${todasActividades.map(actividad => `
-                                        <div class="activity-card">
-                                            <div class="activity-name">${actividad}</div>
-                                            <div class="activity-actions">
-                                                <button onclick="markActivityDone('${ciudad}', '${actividad}')" class="btn-small">✅</button>
-                                                <button onclick="editActivity('${ciudad}', '${actividad}')" class="btn-small">✏️</button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                <button onclick="addActivity('${ciudad}')" class="btn-add-small">➕ Agregar actividad</button>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
+        function calcularTotal() {
+            return viajeData.itinerario.reduce((sum, dia) => sum + dia.costoTransporte + dia.costoHotel, 0);
         }
 
-        // Función para renderizar configuración
-        function renderConfiguracion() {
-            return `
-                <div class="config-container">
-                    <div class="config-section">
-                        <h3>🔧 Configuración de Firebase</h3>
-                        <p>Para guardar tus datos permanentemente, necesitas configurar Firebase:</p>
-                        <ol>
-                            <li>Ve a <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
-                            <li>Crea un nuevo proyecto</li>
-                            <li>Activa Realtime Database</li>
-                            <li>Copia tu configuración aquí:</li>
-                        </ol>
-                        
-                        <div class="firebase-config">
-                            <textarea id="firebaseConfig" placeholder="Pega aquí tu configuración de Firebase..." rows="10"></textarea>
-                            <button onclick="updateFirebaseConfig()" class="btn">💾 Actualizar Configuración</button>
-                        </div>
-                    </div>
-                    
-                    <div class="config-section">
-                        <h3>📊 Gestión de Datos</h3>
-                        <div class="data-actions">
-                            <button onclick="exportData()" class="btn">📤 Exportar Datos</button>
-                            <button onclick="importData()" class="btn">📥 Importar Datos</button>
-                            <button onclick="resetData()" class="btn btn-danger">🗑️ Reiniciar Todo</button>
-                        </div>
-                    </div>
-                    
-                    <div class="config-section">
-                        <h3>ℹ️ Información</h3>
-                        <p><strong>Versión:</strong> 1.0.0</p>
-                        <p><strong>Estado:</strong> ${isFirebaseConnected ? 'Conectado a Firebase' : 'Modo Offline'}</p>
-                        <p><strong>Última actualización:</strong> ${new Date().toLocaleString()}</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Función para calcular presupuesto
-        function calcularPresupuesto() {
+        function calcularTotales() {
             const transporte = viajeData.itinerario.reduce((sum, dia) => sum + dia.costoTransporte, 0);
             const alojamiento = viajeData.itinerario.reduce((sum, dia) => sum + dia.costoHotel, 0);
-            const diasViaje = viajeData.itinerario.length;
-            const comidaEstimada = diasViaje * 2000; // Estimación de $2000 por día por persona
-            
-            const total = transporte + alojamiento + comidaEstimada;
+            const comidaEstimada = 18 * 2500; // 18 días * $2500 por día
             
             return {
                 transporte,
                 alojamiento,
                 comidaEstimada,
-                total
+                total: transporte + alojamiento + comidaEstimada
             };
         }
 
-        // Función para formatear fechas
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('es-ES', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-        }
-
-        // Funciones de la interfaz
-        window.showTab = function(tabName) {
-            // Ocultar todas las pestañas
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
+        function getCiudadesResumen() {
+            const ciudades = {};
+            
+            viajeData.itinerario.forEach(dia => {
+                const ciudad = dia.ciudad.split(' ')[0]; // Tomar solo primera palabra
+                if (!ciudades[ciudad]) {
+                    ciudades[ciudad] = { nombre: ciudad, noches: 0, transporte: 0, hotel: 0 };
+                }
+                ciudades[ciudad].noches += dia.noches || 0;
+                ciudades[ciudad].transporte += dia.costoTransporte || 0;
+                ciudades[ciudad].hotel += dia.costoHotel || 0;
             });
             
-            // Mostrar la pestaña seleccionada
+            return Object.values(ciudades).filter(c => c.noches > 0 || c.transporte > 0 || c.hotel > 0);
+        }
+
+        function formatDateShort(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+        }
+
+        // Funciones globales
+        window.showTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
         };
 
-        window.editDay = function(dayId) {
-            alert('Función de edición en desarrollo');
-        };
-
-        window.addDay = function() {
-            alert('Función de agregar día en desarrollo');
-        };
-
-        window.addActivity = function(ciudad) {
-            const actividad = prompt(`Nueva actividad para ${ciudad}:`);
-            if (actividad) {
-                // Encontrar el día y agregar la actividad
-                const dia = viajeData.itinerario.find(d => d.ciudad === ciudad);
-                if (dia) {
-                    dia.actividades.push(actividad);
-                    saveData('viajeData', viajeData);
-                    renderApp();
-                }
-            }
-        };
-
-        window.exportData = function() {
-            const dataStr = JSON.stringify(viajeData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'viaje-datos.json';
-            link.click();
-        };
-
-        window.resetData = function() {
-            if (confirm('¿Estás seguro de que quieres reiniciar todos los datos?')) {
-                viajeData = initialData;
+        window.editRow = function(id) {
+            const dia = viajeData.itinerario.find(d => d.id === id);
+            if (!dia) return;
+            
+            const newActividades = prompt('Actividades:', dia.actividades);
+            if (newActividades !== null) {
+                dia.actividades = newActividades;
                 saveData('viajeData', viajeData);
                 renderApp();
-                calcularPresupuesto();
             }
+        };
+
+        window.addExpense = function() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>➕ Nuevo Gasto</h3>
+                    <form id="expenseForm">
+                        <div class="form-group">
+                            <label>Descripción:</label>
+                            <input type="text" id="descripcion" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Monto:</label>
+                            <input type="number" id="monto" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría:</label>
+                            <select id="categoria">
+                                <option value="🍽️ Comida">🍽️ Comida</option>
+                                <option value="🎯 Actividades">🎯 Actividades</option>
+                                <option value="🛍️ Compras">🛍️ Compras</option>
+                                <option value="🚗 Transporte local">🚗 Transporte local</option>
+                                <option value="💊 Otros">💊 Otros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ciudad:</label>
+                            <select id="ciudad">
+                                ${[...new Set(viajeData.itinerario.map(d => d.ciudad.split(' ')[0]))].map(c => 
+                                    `<option value="${c}">${c}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha:</label>
+                            <input type="date" id="fechaGasto" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">💾 Guardar</button>
+                            <button type="button" onclick="closeModal()" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('expenseForm').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const gasto = {
+                    id: Date.now().toString(),
+                    descripcion: document.getElementById('descripcion').value,
+                    monto: parseInt(document.getElementById('monto').value),
+                    categoria: document.getElementById('categoria').value,
+                    ciudad: document.getElementById('ciudad').value,
+                    fecha: document.getElementById('fechaGasto').value
+                };
+                
+                if (!viajeData.gastos) viajeData.gastos = [];
+                viajeData.gastos.push(gasto);
+                
+                saveData('viajeData', viajeData);
+                closeModal();
+                renderApp();
+            };
+        };
+
+        window.closeModal = function() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        };
+
+        window.deleteExpense = function(id) {
+            if (confirm('¿Eliminar este gasto?')) {
+                viajeData.gastos = viajeData.gastos.filter(g => g.id !== id);
+                saveData('viajeData', viajeData);
+                renderApp();
+            }
+        };
+
+        window.exportItinerary = function() {
+            const data = JSON.stringify(viajeData, null, 2);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'viaje-europa-2025.json';
+            a.click();
         };
     </script>
     
@@ -538,445 +419,452 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
         }
         
         .header {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 0;
         }
         
         .header h1 {
-            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 700;
             margin-bottom: 10px;
-            font-size: 2.5em;
+            color: #0f172a;
         }
         
-        .header p {
-            color: #7f8c8d;
-            font-size: 1.2em;
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
         }
         
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            background: #f8f9fa;
+        .stat {
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
         }
         
         .connected {
-            color: #27ae60;
-            font-weight: bold;
+            background: #dcfce7;
+            color: #166534;
         }
         
         .offline {
-            color: #e74c3c;
-            font-weight: bold;
+            background: #fef2f2;
+            color: #dc2626;
         }
         
         .tabs {
             display: flex;
             background: white;
-            border-radius: 10px;
-            padding: 5px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e2e8f0;
         }
         
         .tab-btn {
-            flex: 1;
-            padding: 15px 20px;
+            padding: 16px 24px;
             border: none;
             background: transparent;
-            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
         }
         
         .tab-btn:hover {
-            background: #f8f9fa;
+            color: #3b82f6;
+            background: #f8fafc;
         }
         
         .tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: #f8fafc;
         }
         
         .tab-content {
             display: none;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 0;
         }
         
         .tab-content.active {
             display: block;
         }
         
-        .timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .table-container {
+            background: white;
+            overflow-x: auto;
+            border-radius: 0;
         }
         
-        .day-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            border-left: 5px solid #667eea;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        .day-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-        
-        .day-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .day-date {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .day-number {
-            color: #7f8c8d;
-            font-size: 0.9em;
-        }
-        
-        .city-info h3 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        
-        .nights {
-            background: #3498db;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 15px;
-            font-size: 0.8em;
-        }
-        
-        .day-details {
-            display: grid;
-            gap: 15px;
-        }
-        
-        .section h4 {
-            color: #34495e;
-            margin-bottom: 8px;
-            font-size: 1.1em;
-        }
-        
-        .section p, .section li {
-            color: #555;
-            line-height: 1.6;
-        }
-        
-        .section ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .section li {
-            padding: 5px 0;
-            border-bottom: 1px solid #ecf0f1;
-        }
-        
-        .section li:last-child {
-            border-bottom: none;
-        }
-        
-        .cost {
-            background: #e8f5e8;
-            color: #27ae60;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        
-        .day-actions {
-            margin-top: 20px;
-            text-align: right;
-        }
-        
-        .btn-edit {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .btn-add {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            margin-top: 20px;
+        .itinerario-table {
             width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
         }
         
-        .presupuesto-container {
-            max-width: 800px;
-            margin: 0 auto;
+        .itinerario-table th {
+            background: #f8fafc;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
+            white-space: nowrap;
         }
         
-        .budget-summary {
-            margin-bottom: 30px;
+        .itinerario-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
         }
         
-        .budget-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
+        .day-row:hover {
+            background: #fafbfc;
+        }
+        
+        .fecha {
+            font-weight: 600;
+            color: #3b82f6;
+            min-width: 50px;
+        }
+        
+        .ciudad {
+            font-weight: 500;
+            min-width: 120px;
+        }
+        
+        .center {
             text-align: center;
         }
         
-        .budget-card h3 {
-            margin-bottom: 15px;
-            font-size: 1.5em;
-        }
-        
-        .amount {
-            font-size: 3em;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        
-        .remaining {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        
-        .positive {
-            color: #2ecc71;
-        }
-        
-        .negative {
-            color: #e74c3c;
-        }
-        
-        .budget-breakdown {
-            display: grid;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .budget-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .category {
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .percentage {
-            color: #7f8c8d;
-            font-size: 0.9em;
-        }
-        
-        .budget-details h3 {
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-        
-        .day-budget {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        
-        .day-costs {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        
-        .day-costs span {
-            color: #7f8c8d;
-            font-size: 0.9em;
-        }
-        
-        .actividades-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
-        .city-activities {
-            margin-bottom: 40px;
-        }
-        
-        .city-activities h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-        
-        .activities-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .activity-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .activity-name {
-            color: #2c3e50;
+        .costo {
+            text-align: right;
             font-weight: 500;
+            color: #059669;
+            min-width: 80px;
         }
         
-        .activity-actions {
-            display: flex;
-            gap: 5px;
+        .transporte, .hotel {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
-        .btn-small {
+        .actividades {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .notas {
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #6b7280;
+        }
+        
+        .actions {
+            width: 60px;
+            text-align: center;
+        }
+        
+        .btn-edit {
             background: none;
-            border: 1px solid #ddd;
-            padding: 5px 8px;
+            border: 1px solid #d1d5db;
+            padding: 4px 8px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
         }
         
-        .btn-add-small {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
+        .btn-edit:hover {
+            background: #f3f4f6;
         }
         
-        .config-container {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        
-        .config-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .config-section h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
-        
-        .firebase-config textarea {
-            width: 100%;
-            margin: 15px 0;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-family: monospace;
-        }
-        
-        .data-actions {
+        .actions-bar {
+            background: white;
+            padding: 20px 30px;
+            border-top: 1px solid #e5e7eb;
             display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
+            gap: 12px;
         }
         
-        .btn {
-            background: #3498db;
+        .btn-primary {
+            background: #3b82f6;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 10px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
         }
         
-        .btn-danger {
-            background: #e74c3c;
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .budget-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+            background: white;
+        }
+        
+        .budget-card {
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .budget-card.total {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+        }
+        
+        .budget-card h3, .budget-card h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .amount {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .budget-card:not(.total) .amount {
+            color: #059669;
+        }
+        
+        .percentage {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .budget-breakdown {
+            padding: 0 30px 30px;
+            background: white;
+        }
+        
+        .budget-breakdown h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #0f172a;
+        }
+        
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .budget-table th, .budget-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .budget-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .total-cell {
+            font-weight: 600;
+            background: #f0fdf4;
+        }
+        
+        .gastos-container {
+            padding: 30px;
+            background: white;
+        }
+        
+        .gastos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .gastos-header h3 {
+            font-size: 18px;
+            color: #0f172a;
+        }
+        
+        .gastos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .gasto-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+        }
+        
+        .gasto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .categoria {
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .monto {
+            font-weight: 600;
+            color: #dc2626;
+        }
+        
+        .gasto-detalle p {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+        
+        .gasto-detalle p:last-child {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .btn-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+        
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #6b7280;
+            padding: 40px;
+            font-style: italic;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #0f172a;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
         }
         
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
+            .header {
+                padding: 16px 20px;
             }
             
-            .header h1 {
-                font-size: 2em;
+            .stats {
+                gap: 12px;
             }
             
-            .tabs {
-                flex-direction: column;
+            .tab-btn {
+                padding: 12px 16px;
+                font-size: 13px;
             }
             
-            .day-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+            .itinerario-table {
+                font-size: 12px;
             }
             
-            .budget-item, .day-budget {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+            .itinerario-table th, .itinerario-table td {
+                padding: 8px 4px;
             }
             
-            .data-actions {
-                flex-direction: column;
+            .budget-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
             }
             
-            .activities-grid {
+            .actions-bar, .gastos-container, .budget-breakdown {
+                padding: 20px;
+            }
+            
+            .gastos-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -984,11 +872,8 @@
 </head>
 <body>
     <div id="app">
-        <div class="container">
-            <div class="loading">
-                <h2>Cargando gestor de viaje...</h2>
-                <p>Inicializando datos...</p>
-            </div>
+        <div class="header">
+            <h2>Cargando...</h2>
         </div>
     </div>
 </body>
